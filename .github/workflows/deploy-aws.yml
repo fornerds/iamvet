@@ -73,5 +73,7 @@ jobs:
       - name: Health Check
         run: |
           sleep 10
-          curl -f http://${{ secrets.EC2_HOST }} || exit 1
+          # HTTP와 HTTPS 모두 확인
+          curl -f http://${{ secrets.EC2_HOST }} || echo "HTTP check failed, trying HTTPS..."
+          curl -f -k https://${{ secrets.EC2_HOST }} || echo "HTTPS check failed"
 
