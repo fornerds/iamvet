@@ -1,0 +1,77 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # 수동 실행 가능
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ubuntu
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} << 'ENDSSH'
+            set -e
+            
+            # 프로젝트 디렉토리로 이동
+            cd /home/ubuntu/iamvet
+            
+            # NVM 환경 로드
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            
+            # 최신 코드 가져오기
+            echo "=== Git Pull ==="
+            git fetch origin
+            git reset --hard origin/main
+            git clean -fd
+            
+            # 의존성 설치
+            echo "=== Installing Dependencies ==="
+            npm ci --production=false
+            
+            # Prisma 클라이언트 생성
+            echo "=== Generating Prisma Client ==="
+            npx prisma generate
+            
+            # Prisma 마이그레이션 실행
+            echo "=== Running Migrations ==="
+            npx prisma migrate deploy || echo "Migration failed, continuing..."
+            
+            # Next.js 빌드
+            echo "=== Building Next.js Application ==="
+            npm run build
+            
+            # PM2 재시작
+            echo "=== Restarting PM2 ==="
+            pm2 restart iamvet || pm2 start ecosystem.config.js
+            
+            # PM2 상태 확인
+            pm2 status
+            pm2 save
+            
+            echo "=== Deployment Complete ==="
+          ENDSSH
+
+      - name: Health Check
+        run: |
+          sleep 10
+          curl -f http://${{ secrets.EC2_HOST }} || exit 1
+

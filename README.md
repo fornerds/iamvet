@@ -173,6 +173,58 @@ src/
 - `GET /api/messages` - 메시지 목록
 - `GET /api/messages/[id]` - 메시지 상세
 
+## 배포
+
+이 프로젝트는 **AWS EC2**에서 배포됩니다.
+
+### 🚀 Vercel에서 AWS로 전환
+
+Vercel에서 AWS로 완전히 전환하는 가이드:
+
+**개발팀용:**
+- **[완전 전환 가이드](docs/deployment/COMPLETE_MIGRATION_GUIDE.md)** - 전체 프로세스
+- **[환경 변수 마이그레이션](docs/deployment/VERCEL_ENV_MIGRATION.md)** - Vercel 환경 변수 옮기기
+- **[DNS 설정](docs/deployment/AWS_DNS_SETUP.md)** - Route 53 DNS 설정
+- **[AWS 배포 가이드](docs/deployment/AWS_DEPLOYMENT.md)** - 일반 배포 가이드
+
+**클라이언트용:**
+- **[클라이언트 설정 빠른 참조](docs/deployment/CLIENT_SETUP_QUICK_REFERENCE.md)** - 빠른 참조 (추천)
+- **[클라이언트 설정 가이드](docs/deployment/CLIENT_SETUP_GUIDE.md)** - 상세한 단계별 가이드
+- **[클라이언트 설정 체크리스트](docs/deployment/CLIENT_SETUP_CHECKLIST.md)** - 체크리스트
+
+### 자동 배포
+
+- `main` 브랜치에 푸시하면 GitHub Actions를 통해 자동으로 배포됩니다
+- 자세한 내용은 [AWS 배포 가이드](docs/deployment/AWS_DEPLOYMENT.md)를 참조하세요
+
+### 배포 환경
+
+- **인프라**: AWS EC2 (Ubuntu 22.04)
+- **데이터베이스**: AWS RDS (PostgreSQL)
+- **스토리지**: AWS S3
+- **DNS**: AWS Route 53
+- **SSL**: Let's Encrypt (자동 갱신)
+- **프로세스 관리**: PM2
+- **웹 서버**: Nginx (HTTPS, www/non-www 리다이렉트)
+
+### 수동 배포
+
+```bash
+cd deploy
+./deploy-to-ec2.sh <EC2_IP>
+```
+
+### SSL 및 도메인 설정
+
+```bash
+# SSL 인증서 발급
+cd deploy
+./setup-ssl.sh <EC2_IP> <도메인>
+
+# Nginx SSL 설정 (www/non-www 처리)
+./setup-nginx-ssl.sh <EC2_IP> <도메인>
+```
+
 ## 라이센스
 
 MIT License
