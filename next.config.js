@@ -10,7 +10,7 @@ const nextConfig = {
       'ssl.pstatic.net', // 네이버 프로필 이미지
       'k.kakaocdn.net', // 카카오 프로필 이미지
       'lh3.googleusercontent.com', // 구글 프로필 이미지
-      'iamvet-bucket.s3.ap-northeast-2.amazonaws.com', // S3 버킷
+      'iamvet.s3.ap-northeast-2.amazonaws.com', // S3 버킷
       'img.youtube.com', // 유튜브 썸네일 이미지
     ],
     remotePatterns: [

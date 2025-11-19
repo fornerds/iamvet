@@ -11,7 +11,7 @@ const s3Client = new S3Client({
 });
 
 const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME?.replace('arn:aws:s3:::', '') || 
-                   process.env.AWS_S3_BUCKET || 'iamvet-bucket';
+                   process.env.AWS_S3_BUCKET || 'iamvet';
 
 export async function GET(request: NextRequest) {
   try {

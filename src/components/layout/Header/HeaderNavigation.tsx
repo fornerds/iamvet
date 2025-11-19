@@ -5,6 +5,8 @@ import Link from "next/link";
 import { HospitalOnlyButton } from "@/components/ui/HospitalOnlyButton";
 import { useHospitalAuthModal } from "@/hooks/useHospitalAuthModal";
 import { HospitalAuthModal } from "@/components/ui/HospitalAuthModal";
+import { useServiceNotReadyModal } from "@/hooks/useServiceNotReadyModal";
+import { ServiceNotReadyModal } from "@/components/ui/ServiceNotReadyModal";
 import { HeaderNavigationProps } from "./types";
 
 export const HeaderNavigation: React.FC<HeaderNavigationProps> = ({
@@ -14,6 +16,11 @@ export const HeaderNavigation: React.FC<HeaderNavigationProps> = ({
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const { showModal, isModalOpen, closeModal, modalReturnUrl } =
     useHospitalAuthModal();
+  const {
+    showModal: showServiceNotReadyModal,
+    isModalOpen: isServiceNotReadyModalOpen,
+    closeModal: closeServiceNotReadyModal,
+  } = useServiceNotReadyModal();
 
   return (
     <nav className={`ml-[26px] flex gap-[26px] items-center ${className}`}>
@@ -23,6 +30,7 @@ export const HeaderNavigation: React.FC<HeaderNavigationProps> = ({
         const shouldShowLine = isHovered || isActive;
 
         const isResumeRoute = item.href.startsWith("/resumes");
+        const isLectureRoute = item.href.startsWith("/lectures");
 
         const linkStyle = {
           position: "relative" as const,
@@ -48,16 +56,47 @@ export const HeaderNavigation: React.FC<HeaderNavigationProps> = ({
           cursor: "pointer",
         };
 
-        const LinkComponent = isResumeRoute ? HospitalOnlyButton : Link;
+        const handleClick = (e: React.MouseEvent) => {
+          if (isLectureRoute) {
+            e.preventDefault();
+            showServiceNotReadyModal();
+          }
+        };
+
+        if (isResumeRoute) {
+          return (
+            <HospitalOnlyButton
+              key={index}
+              href={item.href}
+              style={linkStyle}
+              onMouseEnter={() => setHoveredIndex(index)}
+              onMouseLeave={() => setHoveredIndex(null)}
+              showAuthModal={showModal}
+            >
+              {item.label}
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "-3px",
+                  left: shouldShowLine ? "0" : "50%",
+                  width: shouldShowLine ? "100%" : "0",
+                  height: "1px",
+                  background: "var(--Keycolor1, #FF8796)",
+                  transition: "width 0.3s ease, left 0.3s ease",
+                }}
+              />
+            </HospitalOnlyButton>
+          );
+        }
 
         return (
-          <LinkComponent
+          <Link
             key={index}
             href={item.href}
             style={linkStyle}
             onMouseEnter={() => setHoveredIndex(index)}
             onMouseLeave={() => setHoveredIndex(null)}
-            {...(isResumeRoute ? { showAuthModal: showModal } : {})}
+            onClick={handleClick}
           >
             {item.label}
             <div
@@ -71,7 +110,7 @@ export const HeaderNavigation: React.FC<HeaderNavigationProps> = ({
                 transition: "width 0.3s ease, left 0.3s ease",
               }}
             />
-          </LinkComponent>
+          </Link>
         );
       })}
 
@@ -80,6 +119,12 @@ export const HeaderNavigation: React.FC<HeaderNavigationProps> = ({
         isOpen={isModalOpen}
         onClose={closeModal}
         returnUrl={modalReturnUrl}
+      />
+
+      {/* 서비스 준비중 모달 */}
+      <ServiceNotReadyModal
+        isOpen={isServiceNotReadyModalOpen}
+        onClose={closeServiceNotReadyModal}
       />
     </nav>
   );

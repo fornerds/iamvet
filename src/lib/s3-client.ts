@@ -2,7 +2,7 @@
 
 // 환경 변수에서 버킷 이름 가져오기
 const getBucketName = () => {
-  return process.env.NEXT_PUBLIC_S3_BUCKET_NAME || 'iamvet-bucket';
+  return process.env.NEXT_PUBLIC_S3_BUCKET_NAME || 'iamvet';
 };
 
 // 이미지 URL이 S3 URL인지 확인하는 헬퍼 함수

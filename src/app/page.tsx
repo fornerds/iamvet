@@ -935,7 +935,7 @@ export default function HomePage() {
           </section>
 
           {/* 기존 강의 섹션을 이 코드로 교체 */}
-          <section className="py-[60px]">
+          {/* <section className="py-[60px]">
             <div className="flex md:justify-between md:items-center flex-col md:flex-row gap-[16px] md:gap-0 mb-[30px]">
               <h3 className="font-title text-[28px] md:text-[44px]">
                 주요 분야 인기 강좌
@@ -946,10 +946,10 @@ export default function HomePage() {
               >
                 <PlusIcon size="21" /> 전체보기
               </Link>
-            </div>
+            </div> */}
 
-            {/* 동적 인기 카테고리 섹션들 */}
-            {popularCategoriesLoading ? (
+          {/* 동적 인기 카테고리 섹션들 */}
+          {/* {popularCategoriesLoading ? (
               // 로딩 상태
               [...Array(3)].map((_, index) => (
                 <div
@@ -990,9 +990,9 @@ export default function HomePage() {
                         ? "h-auto md:h-[400px]"
                         : "mb-[60px] md:mb-[120px] h-auto md:h-[400px]"
                     }`}
-                  >
-                    {/* 카테고리 카드 */}
-                    <div
+                  > */}
+          {/* 카테고리 카드 */}
+          {/* <div
                       className={`relative md:absolute z-10 w-full md:w-[366px] h-auto md:h-[289px] p-[0px] md:p-[24px] md:pr-[113px] md:pb-[24px] flex flex-col justify-center items-start gap-[20px] md:gap-[102px] rounded-[16px] bg-transparent ${
                         isPinkStyle ? "md:bg-[#FF8796]" : "md:bg-box"
                       } md:cursor-pointer md:shadow-lg mb-[20px] md:mb-0`}
@@ -1039,10 +1039,10 @@ export default function HomePage() {
                           size="16px"
                         />
                       </button>
-                    </div>
+                    </div> */}
 
-                    {/* 강의 리스트 */}
-                    <div className="relative md:absolute z-20 md:top-[150px] md:left-[213px] flex items-center gap-[16px] overflow-x-auto custom-scrollbar">
+          {/* 강의 리스트 */}
+          {/* <div className="relative md:absolute z-20 md:top-[150px] md:left-[213px] flex items-center gap-[16px] overflow-x-auto custom-scrollbar">
                       {categoryData.lectures &&
                       categoryData.lectures.length > 0 ? (
                         categoryData.lectures.map((lecture: any) => (
@@ -1076,7 +1076,7 @@ export default function HomePage() {
                 );
               })
             )}
-          </section>
+          </section> */}
 
           <section className="py-[60px]">
             <h3 className="font-title text-[28px] md:text-[44px] mb-[47px] text-center">

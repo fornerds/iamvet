@@ -15,7 +15,7 @@ const s3Client = new S3Client({
 
 // 버킷 이름에서 ARN 부분 제거
 const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME?.replace('arn:aws:s3:::', '') || 
-                   process.env.AWS_S3_BUCKET || 'iamvet-bucket';
+                   process.env.AWS_S3_BUCKET || 'iamvet';
 
 export interface UploadResult {
   success: boolean;

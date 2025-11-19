@@ -4,6 +4,8 @@ import { usePathname } from "next/navigation";
 import { HospitalOnlyButton } from "@/components/ui/HospitalOnlyButton";
 import { useHospitalAuthModal } from "@/hooks/useHospitalAuthModal";
 import { HospitalAuthModal } from "@/components/ui/HospitalAuthModal";
+import { useServiceNotReadyModal } from "@/hooks/useServiceNotReadyModal";
+import { ServiceNotReadyModal } from "@/components/ui/ServiceNotReadyModal";
 import { useNotificationStore } from "@/store/notificationStore";
 import { HeaderMobileMenuProps, DashboardMenuItem } from "./types";
 import {
@@ -125,6 +127,11 @@ export const HeaderMobileMenu: React.FC<HeaderMobileMenuProps> = ({
   const pathname = usePathname();
   const { showModal, isModalOpen, closeModal, modalReturnUrl } =
     useHospitalAuthModal();
+  const {
+    showModal: showServiceNotReadyModal,
+    isModalOpen: isServiceNotReadyModalOpen,
+    closeModal: closeServiceNotReadyModal,
+  } = useServiceNotReadyModal();
   const { unreadCount, fetchUnreadCount } = useNotificationStore();
   const [expandedGroups, setExpandedGroups] = React.useState<Set<string>>(
     new Set(["posts-management", "comments-management", "bookmarks"])
@@ -468,15 +475,62 @@ export const HeaderMobileMenu: React.FC<HeaderMobileMenuProps> = ({
               >
                 {navigationItems.map((item, index) => {
                   const isResumeRoute = item.href.startsWith("/resumes");
-                  const LinkComponent = isResumeRoute
-                    ? HospitalOnlyButton
-                    : Link;
+                  const isLectureRoute = item.href.startsWith("/lectures");
+
+                  const handleLectureClick = (e: React.MouseEvent) => {
+                    e.preventDefault();
+                    showServiceNotReadyModal();
+                    onToggle();
+                  };
+
+                  const handleResumeClick = () => {
+                    onToggle();
+                  };
+
+                  const handleNormalClick = () => {
+                    onToggle();
+                  };
+
+                  if (isResumeRoute) {
+                    return (
+                      <HospitalOnlyButton
+                        key={index}
+                        href={item.href}
+                        onClick={handleResumeClick}
+                        className={`
+                        block px-4 py-3 font-title text-base font-medium rounded-lg transition-colors duration-200 
+                        ${
+                          item.active
+                            ? "text-[#FF8796] bg-[#FFF7F7]"
+                            : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                        }
+                        border-none bg-none cursor-pointer text-left
+                      `}
+                        showAuthModal={showModal}
+                        style={{
+                          border: "none",
+                          background: "none",
+                          cursor: "pointer",
+                          textAlign: "left",
+                          width: "100%",
+                          padding: "12px 16px",
+                          fontFamily: "inherit",
+                          fontSize: "inherit",
+                          fontWeight: "inherit",
+                        }}
+                      >
+                        {item.label}
+                      </HospitalOnlyButton>
+                    );
+                  }
 
                   return (
-                    <LinkComponent
+                    <Link
                       key={index}
                       href={item.href}
-                      onClick={onToggle}
+                      onClick={
+                        isLectureRoute ? handleLectureClick : handleNormalClick
+                      }
                       className={`
                         block px-4 py-3 font-title text-base font-medium rounded-lg transition-colors duration-200 
                         ${
@@ -484,31 +538,10 @@ export const HeaderMobileMenu: React.FC<HeaderMobileMenuProps> = ({
                             ? "text-[#FF8796] bg-[#FFF7F7]"
                             : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                         }
-                        ${
-                          isResumeRoute
-                            ? "border-none bg-none cursor-pointer text-left"
-                            : ""
-                        }
                       `}
-                      {...(isResumeRoute ? { showAuthModal: showModal } : {})}
-                      style={
-                        isResumeRoute
-                          ? {
-                              border: "none",
-                              background: "none",
-                              cursor: "pointer",
-                              textAlign: "left",
-                              width: "100%",
-                              padding: "12px 16px",
-                              fontFamily: "inherit",
-                              fontSize: "inherit",
-                              fontWeight: "inherit",
-                            }
-                          : {}
-                      }
                     >
                       {item.label}
-                    </LinkComponent>
+                    </Link>
                   );
                 })}
 
@@ -754,6 +787,12 @@ export const HeaderMobileMenu: React.FC<HeaderMobileMenuProps> = ({
         isOpen={isModalOpen}
         onClose={closeModal}
         returnUrl={modalReturnUrl}
+      />
+
+      {/* 서비스 준비중 모달 */}
+      <ServiceNotReadyModal
+        isOpen={isServiceNotReadyModalOpen}
+        onClose={closeServiceNotReadyModal}
       />
     </>
   );
