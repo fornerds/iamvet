@@ -83,6 +83,7 @@ jobs:
             echo "=== Creating .env.production ==="
             cat > .env.production << ENVEOF
             NODE_ENV=production
+            NODE_TLS_REJECT_UNAUTHORIZED=0
             DATABASE_URL="$DATABASE_URL"
             JWT_SECRET="$JWT_SECRET"
             JWT_REFRESH_SECRET="$JWT_REFRESH_SECRET"
