@@ -135,15 +135,10 @@ jobs:
             echo "=== Building Next.js Application ==="
             npm run build
             
-            # PM2 재시작
-            echo "=== Restarting PM2 ==="
-            if pm2 list | grep -q iamvet; then
-              pm2 restart iamvet --update-env
-            else
-              # ecosystem.config.js 파일 확인 및 생성
-              if [ ! -f ecosystem.config.js ]; then
-                echo "Creating ecosystem.config.js..."
-                cat > ecosystem.config.js << 'ECOSYSTEMEOF'
+            # ecosystem.config.js 파일 생성 (항상 최신으로 업데이트)
+            echo "=== Creating ecosystem.config.js ==="
+            mkdir -p logs
+            cat > ecosystem.config.js << 'ECOSYSTEMEOF'
             const fs = require('fs');
             const path = require('path');
             
@@ -193,10 +188,13 @@ jobs:
               }]
             };
             ECOSYSTEMEOF
-              fi
-              mkdir -p logs
-              pm2 start ecosystem.config.js
+            
+            # PM2 재시작
+            echo "=== Restarting PM2 ==="
+            if pm2 list | grep -q iamvet; then
+              pm2 delete iamvet
             fi
+            pm2 start ecosystem.config.js
             
             # PM2 상태 확인
             pm2 status
