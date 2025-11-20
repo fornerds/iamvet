@@ -75,6 +75,8 @@ jobs:
             
             # 최신 코드 가져오기
             echo "=== Git Pull ==="
+            # Git lock 파일 제거 (이전 프로세스가 비정상 종료된 경우)
+            rm -f .git/index.lock .git/refs/heads/main.lock
             git fetch origin
             git reset --hard origin/main
             git clean -fd
