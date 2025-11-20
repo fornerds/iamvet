@@ -90,7 +90,7 @@ const BannerSlider: React.FC<BannerSliderProps> = ({
             transform: `translateX(-${currentSlide * 100}%)`,
           }}
         >
-          {banners.map((banner) => (
+          {banners.map((banner, index) => (
             <div
               key={banner.id}
               className="w-full h-full flex-shrink-0 relative"
@@ -102,6 +102,8 @@ const BannerSlider: React.FC<BannerSliderProps> = ({
                 className="object-cover"
                 style={{ borderRadius: "clamp(8px, 3.1vw, 30px)" }}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                quality={100}
+                priority={index === 0}
               />
 
               {/* 확인하러가기 버튼 - 반응형 */}
