@@ -850,12 +850,13 @@ export async function checkPhoneDuplicate(phone: string): Promise<{
 
     // Prisma를 사용하여 중복 확인 (raw query 사용)
     const { prisma } = await import("@/lib/prisma");
+    const { Prisma } = await import("@prisma/client");
     
-    const existingUsers = await prisma.$queryRaw<Array<{ id: string }>>`
-      SELECT id FROM users 
+    const existingUsers = await prisma.$queryRaw<Array<{ id: string }>>(
+      Prisma.sql`SELECT id FROM users 
       WHERE REPLACE(phone, '-', '') = ${normalizedPhone} 
-      AND "isActive" = true
-    `;
+      AND "isActive" = true`
+    );
 
     const isDuplicate = existingUsers.length > 0;
 
