@@ -848,11 +848,16 @@ export async function checkPhoneDuplicate(phone: string): Promise<{
     // 연락처 형식 정규화 (하이픈 제거)
     const normalizedPhone = phone.replace(/-/g, "");
 
-    const existingUser = await sql`
-      SELECT id FROM users WHERE REPLACE(phone, '-', '') = ${normalizedPhone} AND "isActive" = true
+    // Prisma를 사용하여 중복 확인 (raw query 사용)
+    const { prisma } = await import("@/lib/prisma");
+    
+    const existingUsers = await prisma.$queryRaw<Array<{ id: string }>>`
+      SELECT id FROM users 
+      WHERE REPLACE(phone, '-', '') = ${normalizedPhone} 
+      AND "isActive" = true
     `;
 
-    const isDuplicate = existingUser.length > 0;
+    const isDuplicate = existingUsers.length > 0;
 
     return {
       success: true,
