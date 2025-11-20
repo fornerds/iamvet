@@ -23,6 +23,11 @@ const pool = new Pool({
 
 // Neon의 sql 템플릿 태그와 유사한 인터페이스 제공
 // 템플릿 리터럴을 처리하여 pg의 query 메서드와 호환되도록 구현
+type SqlFunction = {
+  (strings: TemplateStringsArray, ...values: any[]): Promise<any[]>;
+  query: (query: string, params: any[]) => Promise<any[]>;
+};
+
 const sqlFunction = async (
   strings: TemplateStringsArray,
   ...values: any[]
@@ -71,11 +76,9 @@ const sqlFunction = async (
 };
 
 // sql.query 메서드도 지원 (기존 코드 호환성)
-sqlFunction.query = async (query: string, params: any[]) => {
+(sqlFunction as SqlFunction).query = async (query: string, params: any[]) => {
   const result = await pool.query(query, params);
   return result.rows;
 };
 
-export const sql = sqlFunction as typeof sqlFunction & {
-  query: (query: string, params: any[]) => Promise<any[]>;
-};
+export const sql = sqlFunction as SqlFunction;
