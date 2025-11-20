@@ -19,6 +19,7 @@ export default function VeterinarianSocialCompletePage() {
     profileImage: searchParams.get("profileImage") || undefined,
     provider: searchParams.get("provider") || "",
     providerId: searchParams.get("providerId") || "",
+    kakaoTalkUuid: searchParams.get("kakaoTalkUuid") || undefined,
   };
 
   // 소셜 데이터 유효성 검사
@@ -54,6 +55,7 @@ export default function VeterinarianSocialCompletePage() {
         termsAgreed: formData.agreements.terms,
         privacyAgreed: formData.agreements.privacy,
         marketingAgreed: formData.agreements.marketing,
+        kakaoTalkUuid: socialData.kakaoTalkUuid, // 카카오톡 UUID 추가
       };
 
       console.log("수의사 소셜 회원가입 데이터:", registrationData);

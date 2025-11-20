@@ -19,6 +19,7 @@ export default function VeterinaryStudentSocialCompletePage() {
     profileImage: searchParams.get("profileImage") || undefined,
     provider: searchParams.get("provider") || "",
     providerId: searchParams.get("providerId") || "",
+    kakaoTalkUuid: searchParams.get("kakaoTalkUuid") || undefined,
   };
 
   // 소셜 데이터 유효성 검사
@@ -58,6 +59,7 @@ export default function VeterinaryStudentSocialCompletePage() {
         termsAgreed: formData.agreements.terms,
         privacyAgreed: formData.agreements.privacy,
         marketingAgreed: formData.agreements.marketing,
+        kakaoTalkUuid: socialData.kakaoTalkUuid, // 카카오톡 UUID 추가
       };
 
       console.log("수의학과 학생 소셜 회원가입 데이터:", registrationData);

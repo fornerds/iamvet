@@ -80,6 +80,10 @@ export async function GET(request: NextRequest) {
 
     const profile = kakaoUser.kakao_account?.profile || {};
     const email = kakaoUser.kakao_account?.email;
+    
+    // 카카오톡 UUID 추출 (플러스친구 메시지 발송용)
+    // 카카오 API에서 제공하는 경우에만 사용
+    const kakaoTalkUuid = kakaoUser.kakao_account?.talk_message?.uuid || undefined;
 
     if (!email) {
       return createErrorPage("Kakao 로그인 실패", "이메일 정보가 필요합니다");
@@ -118,7 +122,10 @@ export async function GET(request: NextRequest) {
       userType,
       provider: "KAKAO",
       providerId: kakaoUser.id.toString(),
-      socialData: kakaoUser,
+      socialData: {
+        ...kakaoUser,
+        kakaoTalkUuid, // 카카오톡 UUID 추가
+      },
     });
 
     if (!authResult.success) {
@@ -149,17 +156,20 @@ export async function GET(request: NextRequest) {
       responseData.socialData
     ) {
       const socialData = responseData.socialData;
-      const registrationUrl = `/register/social-complete/${userType}?email=${encodeURIComponent(
-        socialData.email
-      )}&name=${encodeURIComponent(
-        socialData.name
-      )}&profileImage=${encodeURIComponent(
-        socialData.profileImage || ""
-      )}&provider=${socialData.provider}&providerId=${encodeURIComponent(
-        socialData.providerId
-      )}`;
+      const registrationUrl = new URL(`/register/social-complete/${userType}`, request.url);
+      registrationUrl.searchParams.set("email", socialData.email);
+      registrationUrl.searchParams.set("name", socialData.name);
+      if (socialData.profileImage) {
+        registrationUrl.searchParams.set("profileImage", socialData.profileImage);
+      }
+      registrationUrl.searchParams.set("provider", socialData.provider);
+      registrationUrl.searchParams.set("providerId", socialData.providerId);
+      // 카카오톡 UUID 추가 (플러스친구 메시지 발송용)
+      if (socialData.kakaoTalkUuid) {
+        registrationUrl.searchParams.set("kakaoTalkUuid", socialData.kakaoTalkUuid);
+      }
 
-      return NextResponse.redirect(new URL(registrationUrl, request.url));
+      return NextResponse.redirect(registrationUrl);
     }
 
     // Return success page that posts message to parent window

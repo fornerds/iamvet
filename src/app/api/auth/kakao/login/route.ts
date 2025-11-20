@@ -42,7 +42,8 @@ export async function GET(request: NextRequest) {
     kakaoAuthUrl.searchParams.set("client_id", kakaoClientId);
     kakaoAuthUrl.searchParams.set("redirect_uri", redirectUri);
     kakaoAuthUrl.searchParams.set("response_type", "code");
-    kakaoAuthUrl.searchParams.set("scope", "profile_nickname account_email");
+    // talk_message 권한 추가 (플러스친구 메시지 발송을 위해)
+    kakaoAuthUrl.searchParams.set("scope", "profile_nickname account_email talk_message");
     kakaoAuthUrl.searchParams.set("state", state);
 
     // Redirect to Kakao OAuth
