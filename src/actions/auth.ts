@@ -3146,7 +3146,9 @@ export async function updateVeterinarianProfile(formData: FormData) {
     console.log("[Server Action] SQL 쿼리:", updateQuery);
     console.log("[Server Action] SQL 값들:", updateValues);
 
-    const result = await sql.query(updateQuery, updateValues);
+    // pool을 직접 사용하여 쿼리 실행
+    const { pool } = await import("@/lib/database");
+    const result = await pool.query(updateQuery, updateValues);
 
     console.log("[Server Action] 업데이트 결과:", result);
 
