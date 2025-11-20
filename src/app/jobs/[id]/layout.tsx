@@ -10,9 +10,10 @@ export async function generateMetadata({
     const { id } = await params;
 
     // API에서 채용공고 정보 가져오기
+    const { getBaseDomain } = await import("@/lib/metadata-utils");
     const baseUrl =
       process.env.NODE_ENV === "production"
-        ? "https://www.iam-vet.com"
+        ? getBaseDomain()
         : "http://localhost:3000";
 
     const response = await fetch(`${baseUrl}/api/jobs/${id}`, {
@@ -28,7 +29,7 @@ export async function generateMetadata({
 
     const jobData = await response.json();
 
-    return generateJobMetadata({
+    const metadata = generateJobMetadata({
       title: jobData.title || "수의사 채용",
       hospitalName:
         jobData.hospital?.name || jobData.hospitalName || "동물병원",
@@ -39,6 +40,20 @@ export async function generateMetadata({
           jobData.title || "수의사"
         } 직무를 담당할 인재를 찾고 있습니다.`,
     });
+
+    // 실제 페이지 URL로 업데이트
+    const baseDomain = getBaseDomain();
+    const actualUrl = `${baseDomain}/jobs/${id}`;
+    return {
+      ...metadata,
+      alternates: {
+        canonical: actualUrl,
+      },
+      openGraph: {
+        ...metadata.openGraph,
+        url: actualUrl,
+      },
+    };
   } catch (error) {
     console.error("Error generating job metadata:", error);
     return {

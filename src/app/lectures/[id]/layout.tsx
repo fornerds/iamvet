@@ -10,9 +10,10 @@ export async function generateMetadata({
     const { id } = await params;
 
     // API에서 강의 정보 가져오기
+    const { getBaseDomain } = await import("@/lib/metadata-utils");
     const baseUrl =
       process.env.NODE_ENV === "production"
-        ? "https://www.iam-vet.com"
+        ? getBaseDomain()
         : "http://localhost:3000";
 
     const response = await fetch(`${baseUrl}/api/lectures/${id}`, {
@@ -39,7 +40,7 @@ export async function generateMetadata({
       return duration;
     };
 
-    return generateLectureMetadata({
+    const metadata = generateLectureMetadata({
       title: lectureData.title || "수의학 강의",
       instructor: lectureData.instructor || "전문 강사",
       duration: formatDuration(lectureData.duration),
@@ -49,6 +50,20 @@ export async function generateMetadata({
           lectureData.title || "수의학 강의"
         } 영상입니다.`,
     });
+
+    // 실제 페이지 URL로 업데이트
+    const baseDomain = getBaseDomain();
+    const actualUrl = `${baseDomain}/lectures/${id}`;
+    return {
+      ...metadata,
+      alternates: {
+        canonical: actualUrl,
+      },
+      openGraph: {
+        ...metadata.openGraph,
+        url: actualUrl,
+      },
+    };
   } catch (error) {
     console.error("Error generating lecture metadata:", error);
     return {

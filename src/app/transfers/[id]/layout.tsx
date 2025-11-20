@@ -10,9 +10,10 @@ export async function generateMetadata({
     const { id } = await params;
 
     // API에서 양도양수 정보 가져오기
+    const { getBaseDomain } = await import("@/lib/metadata-utils");
     const baseUrl =
       process.env.NODE_ENV === "production"
-        ? "https://www.iam-vet.com"
+        ? getBaseDomain()
         : "http://localhost:3000";
 
     const response = await fetch(`${baseUrl}/api/transfers/${id}`, {
@@ -35,12 +36,26 @@ export async function generateMetadata({
       return `${(numPrice / 10000).toLocaleString()}만원`;
     };
 
-    return generateTransferMetadata({
+    const metadata = generateTransferMetadata({
       title: transferData.title || "양도양수",
       type: transferData.type || transferData.category || "동물병원",
       location: transferData.location || transferData.address || "전국",
       price: transferData.price ? formatPrice(transferData.price) : undefined,
     });
+
+    // 실제 페이지 URL로 업데이트
+    const baseDomain = getBaseDomain();
+    const actualUrl = `${baseDomain}/transfers/${id}`;
+    return {
+      ...metadata,
+      alternates: {
+        canonical: actualUrl,
+      },
+      openGraph: {
+        ...metadata.openGraph,
+        url: actualUrl,
+      },
+    };
   } catch (error) {
     console.error("Error generating transfer metadata:", error);
     return {

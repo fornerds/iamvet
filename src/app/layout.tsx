@@ -2,8 +2,12 @@ import { Metadata } from "next";
 import { gmarketSans, suit } from "@/lib/fonts";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { QueryProvider } from "@/components/providers/QueryProvider";
+import { getBaseDomain, getAllDomains, getOpenGraphImageUrl } from "@/lib/metadata-utils";
 import "./globals.css";
 import "./fonts.css";
+
+const baseDomain = getBaseDomain();
+const ogImageUrl = getOpenGraphImageUrl();
 
 export const metadata: Metadata = {
   title: {
@@ -19,18 +23,21 @@ export const metadata: Metadata = {
     apple: "/iamvet.ico",
   },
   alternates: {
-    canonical: "https://www.iam-vet.com",
+    canonical: baseDomain,
+    languages: {
+      ko: getAllDomains(),
+    },
   },
   openGraph: {
     type: "website",
     locale: "ko_KR",
-    url: "https://www.iam-vet.com",
+    url: baseDomain,
     siteName: "IAMVET",
     title: "IAMVET - 수의사 커뮤니티",
     description: "수의사를 위한 채용, 이력서, 포럼, 양도양수, 강의 플랫폼",
     images: [
       {
-        url: "https://www.iam-vet.com/opengraph.png",
+        url: ogImageUrl,
         width: 1200,
         height: 630,
         alt: "IAMVET - 수의사 커뮤니티",
@@ -44,7 +51,7 @@ export const metadata: Metadata = {
     description: "수의사를 위한 채용, 이력서, 포럼, 양도양수, 강의 플랫폼",
     images: [
       {
-        url: "https://www.iam-vet.com/opengraph.png",
+        url: ogImageUrl,
         alt: "IAMVET - 수의사 커뮤니티",
       },
     ],

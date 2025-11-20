@@ -10,9 +10,10 @@ export async function generateMetadata({
     const { id } = await params;
 
     // API에서 이력서 정보 가져오기
+    const { getBaseDomain } = await import("@/lib/metadata-utils");
     const baseUrl =
       process.env.NODE_ENV === "production"
-        ? "https://www.iam-vet.com"
+        ? getBaseDomain()
         : "http://localhost:3000";
 
     const response = await fetch(`${baseUrl}/api/resumes/${id}`, {
@@ -35,7 +36,7 @@ export async function generateMetadata({
       ...(resumeData.skills || []),
     ].filter(Boolean);
 
-    return generateResumeMetadata({
+    const metadata = generateResumeMetadata({
       title: resumeData.title || "수의사 이력서",
       name: resumeData.user?.name || resumeData.name || "수의사",
       experience:
@@ -44,6 +45,20 @@ export async function generateMetadata({
         "신입",
       specialties: specialties.length > 0 ? specialties : undefined,
     });
+
+    // 실제 페이지 URL로 업데이트
+    const baseDomain = getBaseDomain();
+    const actualUrl = `${baseDomain}/resumes/${id}`;
+    return {
+      ...metadata,
+      alternates: {
+        canonical: actualUrl,
+      },
+      openGraph: {
+        ...metadata.openGraph,
+        url: actualUrl,
+      },
+    };
   } catch (error) {
     console.error("Error generating resume metadata:", error);
     return {

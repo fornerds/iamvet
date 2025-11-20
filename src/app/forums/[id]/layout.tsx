@@ -10,9 +10,10 @@ export async function generateMetadata({
     const { id } = await params;
 
     // API에서 포럼 게시글 정보 가져오기
+    const { getBaseDomain } = await import("@/lib/metadata-utils");
     const baseUrl =
       process.env.NODE_ENV === "production"
-        ? "https://www.iam-vet.com"
+        ? getBaseDomain()
         : "http://localhost:3000";
 
     const response = await fetch(`${baseUrl}/api/forums/${id}`, {
@@ -35,7 +36,7 @@ export async function generateMetadata({
         ? cleanContent.substring(0, 100) + "..."
         : cleanContent;
 
-    return generateForumMetadata({
+    const metadata = generateForumMetadata({
       title: forumData.title || "포럼 게시글",
       author: forumData.user?.name || forumData.author || "수의사",
       category: forumData.category || "임상토론",
@@ -45,6 +46,20 @@ export async function generateMetadata({
           forumData.category || "임상토론"
         } 게시글입니다.`,
     });
+
+    // 실제 페이지 URL로 업데이트
+    const baseDomain = getBaseDomain();
+    const actualUrl = `${baseDomain}/forums/${id}`;
+    return {
+      ...metadata,
+      alternates: {
+        canonical: actualUrl,
+      },
+      openGraph: {
+        ...metadata.openGraph,
+        url: actualUrl,
+      },
+    };
   } catch (error) {
     console.error("Error generating forum metadata:", error);
     return {
