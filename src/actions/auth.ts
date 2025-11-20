@@ -880,16 +880,6 @@ export async function checkPhoneDuplicate(phone: string): Promise<{
       });
       throw prismaError;
     }
-
-    const isDuplicate = existingUsers.length > 0;
-
-    return {
-      success: true,
-      isDuplicate,
-      message: isDuplicate
-        ? "이미 사용 중인 연락처입니다."
-        : "사용 가능한 연락처입니다.",
-    };
   } catch (error) {
     console.error("[SERVER] checkPhoneDuplicate error:", error);
     return {
