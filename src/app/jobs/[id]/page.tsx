@@ -833,6 +833,57 @@ export default function JobDetailPage({
               </div>
             </div>
 
+            {/* 채용 공고 담당자 정보 */}
+            {(jobData.managerName || jobData.managerPhone || jobData.managerEmail || jobData.department) && (
+              <div className="mt-[60px] border-b border-[#EFEFF0] pb-[40px]">
+                <h2 className="font-text text-[20px] font-semibold text-primary mb-[20px]">
+                  채용 공고 담당자 정보
+                </h2>
+                <div className="space-y-4">
+                  {jobData.managerName && (
+                    <div className="flex gap-[40px]">
+                      <span className="font-text text-[16px] text-bold text-sub w-[80px] flex-shrink-0">
+                        담당자명
+                      </span>
+                      <span className="font-text text-[16px] text-sub">
+                        {jobData.managerName}
+                      </span>
+                    </div>
+                  )}
+                  {jobData.managerPhone && (
+                    <div className="flex gap-[40px]">
+                      <span className="font-text text-[16px] text-bold text-sub w-[80px] flex-shrink-0">
+                        연락처
+                      </span>
+                      <span className="font-text text-[16px] text-sub">
+                        {jobData.managerPhone}
+                      </span>
+                    </div>
+                  )}
+                  {jobData.managerEmail && (
+                    <div className="flex gap-[40px]">
+                      <span className="font-text text-[16px] text-bold text-sub w-[80px] flex-shrink-0">
+                        메일
+                      </span>
+                      <span className="font-text text-[16px] text-sub">
+                        {jobData.managerEmail}
+                      </span>
+                    </div>
+                  )}
+                  {jobData.department && (
+                    <div className="flex gap-[40px]">
+                      <span className="font-text text-[16px] text-bold text-sub w-[80px] flex-shrink-0">
+                        담당 부서
+                      </span>
+                      <span className="font-text text-[16px] text-sub">
+                        {jobData.department}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* 병원 정보 */}
             <div className="mt-[40px]">
               <h2 className="font-text text-[20px] font-semibold text-primary mb-[20px]">
