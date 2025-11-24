@@ -58,13 +58,13 @@ const JobFamousList: React.FC = () => {
               {index + 1}
             </div>
 
-            <div className="flex-1 min-w-0">
-              <h3 className="font-text text-bold text-[15px] text-gray-900 hover:text-key1 transition-colors duration-200">
+            <div className="flex-1 min-w-0 max-w-[307px]">
+              <h3 className="font-text text-bold text-[15px] text-gray-900 hover:text-key1 transition-colors duration-200 truncate">
                 {job.hospitalName || job.hospital}
               </h3>
               <div className="flex items-center gap-[4px] text-sm text-gray-600">
-                <span>{job.title || job.position}</span>
-                <span className="font-text text-regular text-[14px]">{`(${job.workType || job.type || '정규직'})`}</span>
+                <span className="truncate max-w-[307px]">{job.title || job.position}</span>
+                <span className="font-text text-regular text-[14px] flex-shrink-0">{`(${job.workType || job.type || '정규직'})`}</span>
               </div>
             </div>
           </div>
