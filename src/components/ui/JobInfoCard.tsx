@@ -89,7 +89,7 @@ const JobInfoCard: React.FC<JobInfoCardProps> = ({
   const titleClass = "font-text text-extrabold text-primary text-[16px]";
 
   const positionClass =
-    "font-text text-semibold text-primary text-[24px] my-[18px]";
+    "font-text text-semibold text-primary text-[24px] my-[18px] line-clamp-2";
 
   return (
     <div className={`${containerClass} ${className || ""}`} onClick={onClick}>
