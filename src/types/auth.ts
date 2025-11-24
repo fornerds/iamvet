@@ -88,6 +88,7 @@ export interface SocialLoginResponse {
     provider: string;
     providerId: string;
     userType: string;
+    kakaoTalkUuid?: string;
   };
   // 기존 계정 에러를 위한 추가 필드들
   email?: string;
