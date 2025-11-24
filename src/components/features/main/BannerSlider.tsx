@@ -103,6 +103,7 @@ const BannerSlider: React.FC<BannerSliderProps> = ({
                 style={{ borderRadius: "clamp(8px, 3.1vw, 30px)" }}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 quality={100}
+                unoptimized={true}
                 priority={index === 0}
               />
 
