@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: baseDomain,
     languages: {
-      ko: getAllDomains(),
+      ko: getAllDomains()[0],
     },
   },
   openGraph: {
