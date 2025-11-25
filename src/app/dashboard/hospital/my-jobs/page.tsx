@@ -6,16 +6,22 @@ import { ArrowLeftIcon, EditIcon } from "public/icons";
 import { SelectBox } from "@/components/ui/SelectBox";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
 import JobInfoCard from "@/components/ui/JobInfoCard";
-import { useMyJobs } from "@/hooks/api/useJobs";
+import { useMyJobs, jobKeys } from "@/hooks/api/useJobs";
 import { Job } from "@/types/job";
+import { useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 
 export default function HospitalMyJobsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("recent");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
+  const [inactiveModalOpen, setInactiveModalOpen] = useState(false);
+  const [clickedJobId, setClickedJobId] = useState<string | null>(null);
   const itemsPerPage = 8;
 
   const { data: jobs = [], isLoading, error } = useMyJobs();
+  const queryClient = useQueryClient();
 
   const filteredAndSortedJobs = useMemo(() => {
     let filtered = [...jobs];
@@ -27,11 +33,11 @@ export default function HospitalMyJobsPage() {
 
         switch (statusFilter) {
           case "active":
-            return job.isActive && !isExpired;
+            return job.isActive && !isExpired && !job.deletedAt;
           case "expired":
             return isExpired;
           case "inactive":
-            return !job.isActive;
+            return !job.isActive || !!job.deletedAt; // 비활성화 또는 삭제된 채용공고
           default:
             return true;
         }
@@ -68,7 +74,53 @@ export default function HospitalMyJobsPage() {
   );
 
   const handleJobClick = (jobId: string) => {
+    const job = jobs.find((j) => j.id === jobId);
+    // 비활성화된 채용공고인 경우 모달 표시
+    if (job && (!job.isActive || job.deletedAt)) {
+      setClickedJobId(jobId);
+      setInactiveModalOpen(true);
+      return;
+    }
     window.location.href = `/jobs/${jobId}`;
+  };
+
+  const handleToggleActive = async (jobId: string | number) => {
+    const jobIdStr = String(jobId);
+    if (togglingIds.has(jobIdStr)) return; // 이미 토글 중이면 무시
+
+    setTogglingIds((prev) => new Set(prev).add(jobIdStr));
+
+    try {
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
+      const response = await axios.put(
+        `/api/dashboard/hospital/my-jobs/${jobIdStr}/toggle-active`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.status === "success") {
+        // 데이터 다시 불러오기
+        await queryClient.invalidateQueries({ queryKey: jobKeys.myJobs });
+      } else {
+        alert(response.data.message || "상태 변경에 실패했습니다.");
+      }
+    } catch (error: any) {
+      console.error("Toggle active error:", error);
+      const errorMessage =
+        error.response?.data?.message || "상태 변경 중 오류가 발생했습니다.";
+      alert(errorMessage);
+    } finally {
+      setTogglingIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(jobIdStr);
+        return newSet;
+      });
+    }
   };
 
   if (isLoading) {
@@ -164,6 +216,7 @@ export default function HospitalMyJobsPage() {
                 return (
                   <JobInfoCard
                     key={job.id}
+                    id={job.id}
                     hospital={job.hospitalName || "병원명 미설정"}
                     dDay={dDay}
                     position={job.title}
@@ -177,6 +230,9 @@ export default function HospitalMyJobsPage() {
                     }
                     variant="wide"
                     showDeadline={job.recruitEndDate !== null}
+                    showToggle={true}
+                    isActive={job.isActive}
+                    onToggleActive={handleToggleActive}
                     onClick={() => handleJobClick(job.id)}
                   />
                 );
@@ -194,6 +250,47 @@ export default function HospitalMyJobsPage() {
           </div>
         </div>
       </div>
+
+      {/* 비활성화된 채용공고 접근 모달 */}
+      {inactiveModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full">
+            <div className="p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">
+                비활성화된 채용공고
+              </h3>
+              <p className="text-gray-600 mb-6">
+                이 채용공고는 현재 비활성화 상태입니다. 채용공고를 활성화하면
+                접근할 수 있습니다.
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setInactiveModalOpen(false);
+                    setClickedJobId(null);
+                  }}
+                  className="flex-1 px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  닫기
+                </button>
+                {clickedJobId && (
+                  <button
+                    onClick={async () => {
+                      setInactiveModalOpen(false);
+                      await handleToggleActive(clickedJobId);
+                      setClickedJobId(null);
+                    }}
+                    className="flex-1 px-4 py-2 bg-[#ff8796] text-white rounded-md hover:bg-[#ff9aa6] transition-colors font-medium"
+                  >
+                    활성화하기
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

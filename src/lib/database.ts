@@ -492,7 +492,7 @@ export const getJobById = async (jobId: string) => {
   // jobs 테이블 조회
   const query = `
     SELECT * FROM jobs 
-    WHERE id = $1 AND "isActive" = true
+    WHERE id = $1 AND "isActive" = true AND "deletedAt" IS NULL
   `;
 
   console.log("getJobById query:", { jobId, query });
@@ -3514,7 +3514,8 @@ export const getHospitalApplicants = async (
 };
 
 export const getHospitalJobPostings = async (hospitalId: string) => {
-  const query = `SELECT * FROM jobs WHERE "hospitalId" = $1 AND "deletedAt" IS NULL`;
+  // 삭제된 채용공고도 포함하여 조회 (my-jobs 페이지에서 관리하기 위해)
+  const query = `SELECT * FROM jobs WHERE "hospitalId" = $1 ORDER BY "createdAt" DESC`;
   const result = await pool.query(query, [hospitalId]);
   return result.rows;
 };
@@ -4490,9 +4491,17 @@ export const getHospitalsWithPagination = async (page = 1, limit = 10) => {
 };
 
 export const deleteJobPosting = async (jobId: string) => {
-  const query = `UPDATE jobs SET deleted_at = NOW() WHERE id = $1`;
-  const result = await pool.query(query, [jobId]);
-  return (result.rowCount ?? 0) > 0;
+  try {
+    console.log("deleteJobPosting called with jobId:", jobId);
+    // 먼저 isActive를 false로 설정하고 deletedAt도 설정
+    const query = `UPDATE jobs SET "isActive" = false, "deletedAt" = NOW() WHERE id = $1`;
+    const result = await pool.query(query, [jobId]);
+    console.log("deleteJobPosting result:", { rowCount: result.rowCount });
+    return (result.rowCount ?? 0) > 0;
+  } catch (error) {
+    console.error("deleteJobPosting error:", error);
+    throw error;
+  }
 };
 
 export const getResumeEvaluationById = async (evaluationId: string) => {

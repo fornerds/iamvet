@@ -26,6 +26,9 @@ interface JobInfoCardProps {
   className?: string;
   deadline?: string | null; // 마감일 정보 추가 (ISO 형식 또는 "상시")
   isAlwaysOpen?: boolean; // 상시 채용 여부
+  showToggle?: boolean; // 활성화 토글 버튼 표시 여부 (my-jobs 페이지에서만)
+  isActive?: boolean; // 채용공고 활성화 여부
+  onToggleActive?: (id: string | number) => void; // 활성화 토글 핸들러
 }
 
 const JobInfoCard: React.FC<JobInfoCardProps> = ({
@@ -45,6 +48,9 @@ const JobInfoCard: React.FC<JobInfoCardProps> = ({
   className,
   deadline = null,
   isAlwaysOpen = false,
+  showToggle = false,
+  isActive = true,
+  onToggleActive,
 }) => {
   const { user, isAuthenticated } = useAuth();
   const isWide = variant === "wide";
@@ -99,6 +105,38 @@ const JobInfoCard: React.FC<JobInfoCardProps> = ({
         <div className="flex items-center space-x-2">
           {showDeadline && dDay !== null && (
             <Tag variant={1}>{dDay >= 0 ? `D-${dDay}` : "마감"}</Tag>
+          )}
+
+          {/* 활성화 토글 버튼 (my-jobs 페이지에서만 표시) */}
+          {showToggle && onToggleActive && id && (
+            <div
+              className="flex items-center gap-2"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              <span className="text-sm font-medium text-gray-700">
+                {isActive ? "활성화" : "비활성화"}
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isActive}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#ff8796] focus:ring-offset-2 ${
+                  isActive ? "bg-[#ff8796]" : "bg-gray-300"
+                }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleActive(id);
+                }}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    isActive ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
           )}
 
           {/* 북마크 아이콘 */}

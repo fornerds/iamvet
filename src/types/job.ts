@@ -28,6 +28,7 @@ export interface Job {
   createdAt: Date;
   updatedAt: Date;
   isActive: boolean;
+  deletedAt?: Date | null;
 }
 
 export interface JobFormData {

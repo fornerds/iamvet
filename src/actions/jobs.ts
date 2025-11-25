@@ -308,6 +308,7 @@ export async function getJobsByHospital(): Promise<{
       createdAt: job.createdAt,
       updatedAt: job.updatedAt,
       isActive: job.isActive,
+      deletedAt: job.deletedAt || null,
     }));
 
     return {
