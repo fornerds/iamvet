@@ -175,7 +175,7 @@ export const DELETE = withAuth(
       const resolvedParams = await params;
       const jobId = resolvedParams.id;
 
-      if (user.userType !== "hospital") {
+      if (user.userType?.toLowerCase() !== "hospital") {
         return NextResponse.json(
           createErrorResponse("병원만 채용공고를 삭제할 수 있습니다"),
           { status: 403 }

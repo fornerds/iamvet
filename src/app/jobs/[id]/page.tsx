@@ -568,7 +568,8 @@ export default function JobDetailPage({
     if (!confirm("정말로 이 채용공고를 삭제하시겠습니까?")) return;
 
     try {
-      const token = localStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
       const response = await axios.delete(`/api/jobs/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -579,9 +580,11 @@ export default function JobDetailPage({
         alert("채용공고가 삭제되었습니다.");
         router.push("/dashboard/hospital/my-jobs");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Delete error:", error);
-      alert("채용공고 삭제 중 오류가 발생했습니다.");
+      const errorMessage =
+        error.response?.data?.message || "채용공고 삭제 중 오류가 발생했습니다.";
+      alert(errorMessage);
     }
   };
 
