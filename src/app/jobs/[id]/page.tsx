@@ -764,21 +764,16 @@ export default function JobDetailPage({
                     })()}
                   </span>
                 </div>
+                <div className="flex gap-[40px]">
+                  <span className="font-text text-[16px] text-bold text-sub w-[80px] flex-shrink-0">
+                    복리후생
+                  </span>
+                  <span className="font-text text-[16px] text-sub">
+                    {jobData.workConditions?.benefits || "4대보험"}
+                  </span>
+                </div>
               </div>
             </div>
-
-            {/* 채용공고 상세설명 */}
-            {jobData.benefits && (
-              <div className="mt-[60px] border-b border-[#EFEFF0] pb-[40px]">
-                <h2 className="font-text text-[20px] font-semibold text-primary mb-[20px]">
-                  채용공고 상세설명
-                </h2>
-                <div
-                  className="font-text text-[16px] text-sub prose prose-sm max-w-none [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_p]:mb-4 [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6 [&_li]:mb-2 [&_strong]:font-semibold [&_em]:italic [&_a]:text-[#ff8796] [&_a]:underline"
-                  dangerouslySetInnerHTML={{ __html: jobData.benefits }}
-                />
-              </div>
-            )}
 
             {/* 자격 요구사항 */}
             <div className="mt-[60px]">
