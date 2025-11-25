@@ -22,6 +22,15 @@ import {
   salaryTypeOptions,
 } from "@/constants/options";
 import { handleNumberInputChange } from "@/utils/validation";
+import dynamic from "next/dynamic";
+
+// Quill을 동적으로 import (SSR 방지)
+const QuillEditor = dynamic(() => import("@/components/QuillEditor"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[400px] bg-gray-50 rounded-lg animate-pulse" />
+  ),
+});
 
 interface JobFormData {
   title: string;
@@ -224,7 +233,7 @@ export default function CreateJobPage() {
               </label>
               <InputBox
                 value={formData.title}
-                onChange={(value) => setFormData({ ...formData, title: value })}
+                onChange={(value) => setFormData((prev) => ({ ...prev, title: value }))}
                 placeholder="제목을 입력해 주세요"
               />
             </div>
@@ -237,7 +246,7 @@ export default function CreateJobPage() {
               <FilterBox.Group
                 value={formData.workType}
                 onChange={(values) =>
-                  setFormData({ ...formData, workType: values })
+                  setFormData((prev) => ({ ...prev, workType: values }))
                 }
               >
                 {workTypeOptions.map((option) => (
@@ -257,7 +266,7 @@ export default function CreateJobPage() {
                 <Checkbox.Item
                   checked={formData.isUnlimitedRecruit}
                   onChange={(checked) =>
-                    setFormData({ ...formData, isUnlimitedRecruit: checked })
+                    setFormData((prev) => ({ ...prev, isUnlimitedRecruit: checked }))
                   }
                 >
                   무기한
@@ -267,7 +276,7 @@ export default function CreateJobPage() {
                 <DatePicker
                   value={formData.recruitEndDate}
                   onChange={(date) =>
-                    setFormData({ ...formData, recruitEndDate: date })
+                    setFormData((prev) => ({ ...prev, recruitEndDate: date }))
                   }
                   placeholder="채용 종료 날짜를 선택해주세요"
                 />
@@ -282,7 +291,7 @@ export default function CreateJobPage() {
               <FilterBox.Group
                 value={formData.major}
                 onChange={(values) =>
-                  setFormData({ ...formData, major: values })
+                  setFormData((prev) => ({ ...prev, major: values }))
                 }
               >
                 {majorOptions.map((option) => (
@@ -301,7 +310,7 @@ export default function CreateJobPage() {
               <FilterBox.Group
                 value={formData.experience}
                 onChange={(values) =>
-                  setFormData({ ...formData, experience: values })
+                  setFormData((prev) => ({ ...prev, experience: values }))
                 }
               >
                 {experienceOptions.map((option) => (
@@ -320,7 +329,7 @@ export default function CreateJobPage() {
               <SelectBox
                 value={formData.position}
                 onChange={(value) =>
-                  setFormData({ ...formData, position: value })
+                  setFormData((prev) => ({ ...prev, position: value }))
                 }
                 options={positionOptions}
                 placeholder="직무를 선택하세요"
@@ -337,7 +346,7 @@ export default function CreateJobPage() {
                   <SelectBox
                     value={formData.salaryType}
                     onChange={(value) =>
-                      setFormData({ ...formData, salaryType: value })
+                      setFormData((prev) => ({ ...prev, salaryType: value }))
                     }
                     options={salaryTypeOptions}
                     placeholder="구분"
@@ -348,7 +357,7 @@ export default function CreateJobPage() {
                     value={formData.salary}
                     onChange={(value) =>
                       handleNumberInputChange(value, (formattedValue) =>
-                        setFormData({ ...formData, salary: formattedValue })
+                        setFormData((prev) => ({ ...prev, salary: formattedValue }))
                       )
                     }
                     placeholder="급여를 입력해 주세요"
@@ -366,14 +375,14 @@ export default function CreateJobPage() {
               <WeekdaySelector
                 value={formData.workDays}
                 onChange={(days) =>
-                  setFormData({ ...formData, workDays: days })
+                  setFormData((prev) => ({ ...prev, workDays: days }))
                 }
               />
               <div className="mt-3">
                 <Checkbox.Item
                   checked={formData.isWorkDaysNegotiable}
                   onChange={(checked) =>
-                    setFormData({ ...formData, isWorkDaysNegotiable: checked })
+                    setFormData((prev) => ({ ...prev, isWorkDaysNegotiable: checked }))
                   }
                 >
                   협의 가능
@@ -390,7 +399,7 @@ export default function CreateJobPage() {
                 <TimePicker
                   value={formData.workStartTime}
                   onChange={(time) =>
-                    setFormData({ ...formData, workStartTime: time })
+                    setFormData((prev) => ({ ...prev, workStartTime: time }))
                   }
                   placeholder="시작 시간"
                 />
@@ -398,7 +407,7 @@ export default function CreateJobPage() {
                 <TimePicker
                   value={formData.workEndTime}
                   onChange={(time) =>
-                    setFormData({ ...formData, workEndTime: time })
+                    setFormData((prev) => ({ ...prev, workEndTime: time }))
                   }
                   placeholder="종료 시간"
                 />
@@ -406,25 +415,26 @@ export default function CreateJobPage() {
               <Checkbox.Item
                 checked={formData.isWorkTimeNegotiable}
                 onChange={(checked) =>
-                  setFormData({ ...formData, isWorkTimeNegotiable: checked })
+                  setFormData((prev) => ({ ...prev, isWorkTimeNegotiable: checked }))
                 }
               >
                 협의 가능
               </Checkbox.Item>
             </div>
 
-            {/* 복리후생 */}
+            {/* 채용공고 상세설명 */}
             <div>
               <label className="block text-[20px] font-medium text-[#3B394D] mb-3">
-                복리후생
+                채용공고 상세설명
               </label>
-              <Textarea
+              <QuillEditor
+                key="job-create-description-editor"
                 value={formData.benefits}
                 onChange={(value) =>
-                  setFormData({ ...formData, benefits: value })
+                  setFormData((prev) => ({ ...prev, benefits: value }))
                 }
-                placeholder="복리후생을 입력해 주세요"
-                rows={4}
+                placeholder="채용공고 상세설명을 입력해 주세요 (이미지, 텍스트 등)"
+                height={400}
               />
             </div>
 
@@ -595,7 +605,7 @@ export default function CreateJobPage() {
                   <InputBox
                     value={formData.managerName}
                     onChange={(value) =>
-                      setFormData({ ...formData, managerName: value })
+                      setFormData((prev) => ({ ...prev, managerName: value }))
                     }
                     placeholder="담당자명을 입력해 주세요"
                   />
@@ -608,7 +618,7 @@ export default function CreateJobPage() {
                   <InputBox
                     value={formData.managerPhone}
                     onChange={(value) =>
-                      setFormData({ ...formData, managerPhone: value })
+                      setFormData((prev) => ({ ...prev, managerPhone: value }))
                     }
                     placeholder="연락처를 입력해 주세요"
                   />
@@ -621,7 +631,7 @@ export default function CreateJobPage() {
                   <InputBox
                     value={formData.managerEmail}
                     onChange={(value) =>
-                      setFormData({ ...formData, managerEmail: value })
+                      setFormData((prev) => ({ ...prev, managerEmail: value }))
                     }
                     placeholder="메일을 입력해 주세요"
                   />
@@ -634,7 +644,7 @@ export default function CreateJobPage() {
                   <InputBox
                     value={formData.department}
                     onChange={(value) =>
-                      setFormData({ ...formData, department: value })
+                      setFormData((prev) => ({ ...prev, department: value }))
                     }
                     placeholder="담당 부서를 입력해 주세요"
                   />

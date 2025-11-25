@@ -145,8 +145,8 @@ export const useJobDetail = (jobId: string) => {
               job.salary && job.salaryType
                 ? `${job.salaryType} ${job.salary}만원`
                 : "협의",
-            benefits: job.benefits || "4대보험",
           },
+          benefits: job.benefits || "",
           qualifications: {
             education: Array.isArray(job.education)
               ? job.education.join(", ")

@@ -22,6 +22,8 @@ const QuillEditor = forwardRef<QuillEditorRef, QuillEditorProps>(
     const quillRef = useRef<HTMLDivElement>(null);
     const quillInstance = useRef<Quill | null>(null);
     const isInitialized = useRef(false);
+    const isUpdatingFromProp = useRef(false);
+    const lastValueRef = useRef<string>(value);
 
     useImperativeHandle(ref, () => ({
       getEditor: () => quillInstance.current,
@@ -101,8 +103,12 @@ const QuillEditor = forwardRef<QuillEditorRef, QuillEditorProps>(
 
           // 내용 변경 이벤트 리스너
           quillInstance.current.on('text-change', () => {
-            const html = quillInstance.current?.root.innerHTML || '';
-            onChange?.(html);
+            // 외부에서 value prop으로 업데이트하는 중이 아닐 때만 onChange 호출
+            if (!isUpdatingFromProp.current) {
+              const html = quillInstance.current?.root.innerHTML || '';
+              lastValueRef.current = html;
+              onChange?.(html);
+            }
           });
         } catch (error) {
           console.error('Quill initialization error:', error);
@@ -123,10 +129,16 @@ const QuillEditor = forwardRef<QuillEditorRef, QuillEditorProps>(
       };
     }, []);
 
-    // value prop이 변경될 때 에디터 내용 업데이트
+    // value prop이 변경될 때 에디터 내용 업데이트 (외부에서 변경된 경우만)
     useEffect(() => {
-      if (quillInstance.current && value !== quillInstance.current.root.innerHTML) {
+      if (quillInstance.current && value !== lastValueRef.current) {
+        isUpdatingFromProp.current = true;
         quillInstance.current.root.innerHTML = value;
+        lastValueRef.current = value;
+        // 다음 이벤트 루프에서 플래그 해제
+        setTimeout(() => {
+          isUpdatingFromProp.current = false;
+        }, 0);
       }
     }, [value]);
 
