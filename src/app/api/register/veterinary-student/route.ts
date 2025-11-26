@@ -68,22 +68,10 @@ export async function POST(request: NextRequest) {
     }
 
     // 대학교 이메일 도메인 검증
-    const universityDomains = [
-      "kangwon.ac.kr", // 강원대학교
-      "konkuk.ac.kr", // 건국대학교
-      "knu.ac.kr", // 경북대학교
-      "gnu.ac.kr", // 경상국립대학교
-      "snu.ac.kr", // 서울대학교
-      "jnu.ac.kr", // 전남대학교
-      "jbnu.ac.kr", // 전북대학교
-      "stu.jejunu.ac.kr", // 제주대학교
-      "o.cnu.ac.kr", // 충남대학교
-      "chungbuk.ac.kr", // 충북대학교
-      "naver.com", // 네이버
-    ];
+    const { VETERINARY_UNIVERSITY_DOMAIN_VALUES } = await import("@/constants/universityDomains");
 
     const domain = universityEmail.split("@")[1]?.toLowerCase();
-    const isValidUniversityEmail = universityDomains.some((uniDomain) =>
+    const isValidUniversityEmail = VETERINARY_UNIVERSITY_DOMAIN_VALUES.some((uniDomain) =>
       domain?.endsWith(uniDomain)
     );
 

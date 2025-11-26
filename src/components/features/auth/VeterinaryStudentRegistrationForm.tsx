@@ -9,7 +9,8 @@ import { checkEmailDuplicate, checkLoginIdDuplicate, checkPhoneDuplicate } from 
 import { validateStudentEmail } from "@/lib/emailValidation";
 import EmailVerificationModal from "./EmailVerificationModal";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { VETERINARY_UNIVERSITY_DOMAINS, VETERINARY_UNIVERSITY_DOMAIN_VALUES } from "@/constants/universityDomains";
 
 interface VeterinaryStudentRegistrationData {
   loginId: string;
@@ -80,6 +81,18 @@ export const VeterinaryStudentRegistrationForm: React.FC<
     showModal: false,
     isVerified: false,
   });
+
+  // 수의학과 학생의 경우 대학교 이메일 관련 상태
+  const [universityEmailId, setUniversityEmailId] = useState("");
+  const [selectedUniversityDomain, setSelectedUniversityDomain] = useState("");
+
+  // 대학교 이메일 조합 및 업데이트
+  useEffect(() => {
+    if (universityEmailId && selectedUniversityDomain) {
+      const fullEmail = `${universityEmailId}@${selectedUniversityDomain}`;
+      setFormData((prev) => ({ ...prev, email: fullEmail }));
+    }
+  }, [universityEmailId, selectedUniversityDomain]);
 
   // 입력 에러 상태
   const [inputErrors, setInputErrors] = useState({
@@ -265,10 +278,7 @@ export const VeterinaryStudentRegistrationForm: React.FC<
         } else if (!emailRegex2.test(value)) {
           error = "올바른 이메일 형식을 입력해주세요.";
         } else if (!validateStudentEmail(value)) {
-          const isDevelopment = process.env.NODE_ENV === 'development';
-          error = isDevelopment 
-            ? "수의학과 대학 이메일(.ac.kr) 또는 @naver.com(테스트용)을 입력해주세요."
-            : "수의학과가 있는 대학교의 이메일을 입력해주세요.";
+          error = "수의학과가 있는 대학교의 이메일을 입력해주세요.";
         }
         break;
 
@@ -378,65 +388,35 @@ export const VeterinaryStudentRegistrationForm: React.FC<
     }
   };
 
-  const handleEmailVerification = async () => {
-    // 이미 인증 중이면 무시
-    if (duplicateCheck.email.isChecking) {
+  // 이메일 인증 모달 열기
+  const handleOpenEmailVerification = () => {
+    if (!universityEmailId.trim()) {
+      alert("이메일 아이디를 입력해주세요.");
       return;
     }
 
-    if (!formData.email.trim()) {
-      alert("대학교 이메일을 입력해주세요.");
+    if (!selectedUniversityDomain) {
+      alert("대학교를 선택해주세요.");
       return;
     }
 
+    const fullEmail = `${universityEmailId}@${selectedUniversityDomain}`;
+    
     // 이메일 형식 검증
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
+    if (!emailRegex.test(fullEmail)) {
       alert("올바른 이메일 형식을 입력해주세요.");
       return;
     }
 
     // 대학교 이메일 도메인 검증
-    if (!validateStudentEmail(formData.email)) {
-      const isDevelopment = process.env.NODE_ENV === 'development';
-      alert(isDevelopment 
-        ? "수의학과 대학 이메일(.ac.kr) 또는 @naver.com(테스트용)을 입력해주세요."
-        : "수의학과가 있는 대학교의 이메일을 입력해주세요.");
+    if (!VETERINARY_UNIVERSITY_DOMAIN_VALUES.includes(selectedUniversityDomain as any)) {
+      alert("수의학과가 있는 대학교의 이메일을 입력해주세요.");
       return;
     }
 
-    setDuplicateCheck((prev) => ({
-      ...prev,
-      email: { ...prev.email, isChecking: true },
-    }));
-
-    try {
-      // 먼저 중복 확인
-      const result = await checkEmailDuplicate(formData.email);
-      
-      if (result.success && !result.isDuplicate) {
-        // 중복이 아니면 이메일 인증 모달 표시
-        setDuplicateCheck((prev) => ({
-          ...prev,
-          email: { ...prev.email, isChecking: false },
-        }));
-        setEmailVerification({ showModal: true, isVerified: false });
-      } else {
-        // 중복이면 에러 표시
-        setDuplicateCheck((prev) => ({
-          ...prev,
-          email: { ...prev.email, isChecking: false },
-        }));
-        alert(result.error || "이미 사용 중인 이메일입니다.");
-      }
-    } catch (error) {
-      console.error("이메일 확인 오류:", error);
-      setDuplicateCheck((prev) => ({
-        ...prev,
-        email: { ...prev.email, isChecking: false },
-      }));
-      alert("이메일 확인 중 오류가 발생했습니다.");
-    }
+    setFormData((prev) => ({ ...prev, email: fullEmail }));
+    setEmailVerification({ showModal: true, isVerified: false });
   };
 
   const handleEmailVerified = () => {
@@ -556,21 +536,32 @@ export const VeterinaryStudentRegistrationForm: React.FC<
     const errors: string[] = [];
 
     requiredFields.forEach((field) => {
-      const value = formData[field] as string;
-      validateField(field as keyof VeterinaryStudentRegistrationData, value);
+      if (field === "email") {
+        // 대학교 이메일 검증
+        if (!universityEmailId.trim()) {
+          errors.push("이메일 아이디를 입력해주세요.");
+        } else if (!selectedUniversityDomain) {
+          errors.push("대학교를 선택해주세요.");
+        } else {
+          validateField(field as keyof VeterinaryStudentRegistrationData, formData.email);
+        }
+      } else {
+        const value = formData[field] as string;
+        validateField(field as keyof VeterinaryStudentRegistrationData, value);
 
-      if (!value?.trim()) {
-        const fieldName = {
-          loginId: "아이디",
-          password: "비밀번호",
-          passwordConfirm: "비밀번호 확인",
-          realName: "실명",
-          nickname: "닉네임",
-          phone: "연락처",
-          email: "대학교 이메일",
-          birthDate: "생년월일",
-        }[field];
-        errors.push(`${fieldName}를 입력해주세요.`);
+        if (!value?.trim()) {
+          const fieldName = {
+            loginId: "아이디",
+            password: "비밀번호",
+            passwordConfirm: "비밀번호 확인",
+            realName: "실명",
+            nickname: "닉네임",
+            phone: "연락처",
+            email: "대학교 이메일",
+            birthDate: "생년월일",
+          }[field];
+          errors.push(`${fieldName}를 입력해주세요.`);
+        }
       }
     });
 
@@ -582,7 +573,7 @@ export const VeterinaryStudentRegistrationForm: React.FC<
     }
 
     // 대학교 이메일 인증은 SNS 사용자도 필요
-    if (!duplicateCheck.email.isValid) {
+    if (!emailVerification.isVerified) {
       errors.push("대학교 이메일 인증을 완료해주세요.");
     }
 
@@ -804,30 +795,76 @@ export const VeterinaryStudentRegistrationForm: React.FC<
                   <p>수의학과 인증을 위해 별도로 대학교 이메일을 입력해주세요.</p>
                 </div>
               )}
-              <InputBox
-                value={formData.email}
-                onChange={handleInputChange("email")}
-                placeholder="수의학과 대학교 이메일을 입력해주세요 (예: student@snu.ac.kr, test@naver.com)"
-                type="email"
-                duplicateCheck={{
-                  buttonText: "인증",
-                  onCheck: handleEmailVerification,
-                  isChecking: duplicateCheck.email.isChecking,
-                  isValid: duplicateCheck.email.isValid,
-                }}
-                success={duplicateCheck.email.isValid}
-                error={!!inputErrors.email}
-                guide={
-                  inputErrors.email
-                    ? { text: inputErrors.email, type: "error" }
-                    : duplicateCheck.email.isValid
-                    ? {
-                        text: "인증된 수의학과 대학교 이메일입니다",
-                        type: "success",
-                      }
-                    : undefined
-                }
-              />
+              
+              {/* 이메일 아이디 입력 및 도메인 선택 */}
+              <div className="flex gap-2 mb-3 items-center">
+                <div className="flex-1">
+                  <InputBox
+                    value={universityEmailId}
+                    onChange={(value) => {
+                      setUniversityEmailId(value);
+                      setEmailVerification({ showModal: false, isVerified: false });
+                      setDuplicateCheck((prev) => ({
+                        ...prev,
+                        email: { ...prev.email, isValid: false },
+                      }));
+                    }}
+                    placeholder="이메일 아이디"
+                    type="text"
+                    error={!!inputErrors.email && !universityEmailId}
+                  />
+                </div>
+                <div className="flex items-center text-gray-500 text-[16px] px-2 font-medium">
+                  @
+                </div>
+                <div className="flex-1">
+                  <select
+                    value={selectedUniversityDomain}
+                    onChange={(e) => {
+                      setSelectedUniversityDomain(e.target.value);
+                      setEmailVerification({ showModal: false, isVerified: false });
+                      setDuplicateCheck((prev) => ({
+                        ...prev,
+                        email: { ...prev.email, isValid: false },
+                      }));
+                    }}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-md text-[16px] focus:outline-none focus:ring-2 focus:ring-[#FF8796] focus:border-transparent bg-white"
+                  >
+                    <option value="">도메인 선택</option>
+                    {VETERINARY_UNIVERSITY_DOMAINS.map((domain) => (
+                      <option key={domain.value} value={domain.value}>
+                        {domain.value}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* 인증 버튼 */}
+              <div className="mb-3">
+                <Button
+                  variant="line"
+                  size="medium"
+                  onClick={handleOpenEmailVerification}
+                  disabled={!universityEmailId || !selectedUniversityDomain || emailVerification.isVerified}
+                  fullWidth={true}
+                >
+                  {emailVerification.isVerified ? "인증 완료" : "인증번호 받기"}
+                </Button>
+              </div>
+
+              {/* 인증 상태 표시 */}
+              {emailVerification.isVerified && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-700">
+                  <p>✅ 이메일 인증이 완료되었습니다.</p>
+                </div>
+              )}
+
+              {inputErrors.email && (
+                <p className="text-red-500 text-sm mt-2">
+                  {inputErrors.email}
+                </p>
+              )}
             </div>
 
             {/* 생년월일 */}

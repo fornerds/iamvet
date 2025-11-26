@@ -10,6 +10,7 @@ import {
 import { checkUserIdDuplicate, checkEmailDuplicate } from "@/actions/auth";
 import Link from "next/link";
 import { useState } from "react";
+import { VETERINARY_UNIVERSITY_DOMAIN_VALUES } from "@/constants/universityDomains";
 import {
   BaseRegistrationData,
   VeterinarianRegistrationData,
@@ -186,22 +187,8 @@ export const CommonRegistrationForm: React.FC<CommonRegistrationFormProps> = ({
 
   // 대학교 이메일 검증
   const validateUniversityEmail = (email: string): boolean => {
-    const universityDomains = [
-      "kangwon.ac.kr", // 강원대학교
-      "konkuk.ac.kr", // 건국대학교
-      "knu.ac.kr", // 경북대학교
-      "gnu.ac.kr", // 경상국립대학교
-      "snu.ac.kr", // 서울대학교
-      "jnu.ac.kr", // 전남대학교
-      "jbnu.ac.kr", // 전북대학교
-      "stu.jejunu.ac.kr", // 제주대학교
-      "o.cnu.ac.kr", // 충남대학교
-      "chungbuk.ac.kr", // 충북대학교
-      "naver.com", // 네이버
-    ];
-
     const domain = email.split("@")[1]?.toLowerCase();
-    return universityDomains.some((uniDomain) => domain === uniDomain);
+    return VETERINARY_UNIVERSITY_DOMAIN_VALUES.some((uniDomain) => domain === uniDomain);
   };
 
   // 대학교 이메일 중복 검사
