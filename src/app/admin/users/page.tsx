@@ -700,78 +700,47 @@ export default function UsersManagement() {
                     <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                       <Button
                         size="small"
-                        startIcon={<VerifiedUser />}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleAction(user, "verify");
-                        }}
-                        disabled={user.verified}
-                        sx={{
-                          backgroundColor: user.verified
-                            ? "#f6f6f6"
-                            : "#698cfc",
-                          color: user.verified ? "#9098a4" : "white",
-                          borderRadius: "6px",
-                          fontSize: "11px",
-                          px: 1.5,
-                          py: 0.5,
-                          minWidth: "auto",
-                          "&:hover": {
-                            backgroundColor: user.verified
-                              ? "#f6f6f6"
-                              : "#5a7cfc",
-                          },
-                          "&:disabled": {
-                            backgroundColor: "#f6f6f6",
-                            color: "#caced6",
-                          },
-                        }}
-                      >
-                        인증
-                      </Button>
-                      <Button
-                        size="small"
-                        startIcon={<Block />}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAction(user, "reject");
+                          handleUserClick(user);
                         }}
                         sx={{
-                          backgroundColor: "#ffb7b8",
+                          backgroundColor: "#9098a4",
                           color: "white",
                           borderRadius: "6px",
                           fontSize: "11px",
                           px: 1.5,
                           py: 0.5,
                           minWidth: "auto",
+                          fontWeight: "600",
                           "&:hover": {
-                            backgroundColor: "#ff8796",
+                            backgroundColor: "#7a8494",
                           },
                         }}
                       >
-                        거부
+                        자세히
                       </Button>
                       <Button
                         size="small"
-                        startIcon={user.isActive ? <Lock /> : <LockOpen />}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleAction(user, "suspend");
                         }}
                         sx={{
-                          backgroundColor: "#aabeff",
+                          backgroundColor: user.isActive ? "#ff8796" : "#698cfc",
                           color: "white",
                           borderRadius: "6px",
                           fontSize: "11px",
                           px: 1.5,
                           py: 0.5,
                           minWidth: "auto",
+                          fontWeight: "600",
                           "&:hover": {
-                            backgroundColor: "#85a1ff",
+                            backgroundColor: user.isActive ? "#ff6b7d" : "#5a7cfc",
                           },
                         }}
                       >
-                        {user.isActive ? "정지" : "활성화"}
+                        {user.isActive ? "비활성(정지)" : "활성(인증)"}
                       </Button>
                     </Box>
                   </TableCell>
