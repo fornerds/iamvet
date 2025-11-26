@@ -163,17 +163,17 @@ export async function GET(request: NextRequest) {
     }
 
     // Return success page that posts message to parent window
-    return createSuccessPage("Naver 로그인 성공", responseData);
+    return createSuccessPage("Naver 로그인 성공", responseData, request);
   } catch (error) {
     console.error("Naver callback error:", error);
     return createErrorPage("Naver 로그인 실패", "서버 오류가 발생했습니다");
   }
 }
 
-function createSuccessPage(message: string, data: any) {
+function createSuccessPage(message: string, data: any, request?: NextRequest) {
   // Generate redirect URL using AuthService
   const userType = data.user?.userType || data.socialData?.userType;
-  const redirectUrl = AuthService.generateRedirectUrl(
+  const relativeRedirectUrl = AuthService.generateRedirectUrl(
     data.isProfileComplete,
     userType,
     data.isProfileComplete
@@ -186,6 +186,16 @@ function createSuccessPage(message: string, data: any) {
         }
       : data.socialData
   );
+
+  // Convert relative URL to absolute URL
+  // Use NEXT_PUBLIC_SITE_URL if available, otherwise use request origin
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+    (request ? new URL(request.url).origin : 'https://iam-vet.com');
+  
+  // If redirectUrl is already absolute, use it as is
+  const redirectUrl = relativeRedirectUrl.startsWith('http') 
+    ? relativeRedirectUrl 
+    : `${baseUrl}${relativeRedirectUrl.startsWith('/') ? '' : '/'}${relativeRedirectUrl}`;
 
   const html = `
     <!DOCTYPE html>

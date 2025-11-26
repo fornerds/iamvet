@@ -80,10 +80,6 @@ export async function GET(request: NextRequest) {
 
     const profile = kakaoUser.kakao_account?.profile || {};
     const email = kakaoUser.kakao_account?.email;
-    
-    // 카카오톡 UUID 추출 (플러스친구 메시지 발송용)
-    // 카카오 API에서 제공하는 경우에만 사용
-    const kakaoTalkUuid = kakaoUser.kakao_account?.talk_message?.uuid || undefined;
 
     if (!email) {
       return createErrorPage("Kakao 로그인 실패", "이메일 정보가 필요합니다");
@@ -122,10 +118,7 @@ export async function GET(request: NextRequest) {
       userType,
       provider: "KAKAO",
       providerId: kakaoUser.id.toString(),
-      socialData: {
-        ...kakaoUser,
-        kakaoTalkUuid, // 카카오톡 UUID 추가
-      },
+      socialData: kakaoUser,
     });
 
     if (!authResult.success) {
@@ -164,16 +157,12 @@ export async function GET(request: NextRequest) {
       }
       registrationUrl.searchParams.set("provider", socialData.provider);
       registrationUrl.searchParams.set("providerId", socialData.providerId);
-      // 카카오톡 UUID 추가 (플러스친구 메시지 발송용)
-      if (socialData.kakaoTalkUuid) {
-        registrationUrl.searchParams.set("kakaoTalkUuid", socialData.kakaoTalkUuid);
-      }
 
       return NextResponse.redirect(registrationUrl);
     }
 
     // Return success page that posts message to parent window
-    return createSuccessPage("Kakao 로그인 성공", responseData);
+    return createSuccessPage("Kakao 로그인 성공", responseData, request);
   } catch (error) {
     console.error("Kakao callback error:", error);
     console.error("Error details:", {
@@ -198,10 +187,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-function createSuccessPage(message: string, data: any) {
+function createSuccessPage(message: string, data: any, request?: NextRequest) {
   // Generate redirect URL using AuthService
   const userType = data.user?.userType || data.socialData?.userType;
-  const redirectUrl = AuthService.generateRedirectUrl(
+  const relativeRedirectUrl = AuthService.generateRedirectUrl(
     data.isProfileComplete,
     userType,
     data.isProfileComplete
@@ -214,6 +203,16 @@ function createSuccessPage(message: string, data: any) {
         }
       : data.socialData
   );
+
+  // Convert relative URL to absolute URL
+  // Use NEXT_PUBLIC_SITE_URL if available, otherwise use request origin
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+    (request ? new URL(request.url).origin : 'https://iam-vet.com');
+  
+  // If redirectUrl is already absolute, use it as is
+  const redirectUrl = relativeRedirectUrl.startsWith('http') 
+    ? relativeRedirectUrl 
+    : `${baseUrl}${relativeRedirectUrl.startsWith('/') ? '' : '/'}${relativeRedirectUrl}`;
 
   const html = `
     <!DOCTYPE html>
