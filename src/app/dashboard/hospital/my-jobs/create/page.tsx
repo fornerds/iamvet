@@ -22,6 +22,15 @@ import {
   salaryTypeOptions,
 } from "@/constants/options";
 import { handleNumberInputChange } from "@/utils/validation";
+import dynamic from "next/dynamic";
+
+// Quill을 동적으로 import (SSR 방지)
+const QuillEditor = dynamic(() => import("@/components/QuillEditor"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[400px] bg-gray-50 rounded-lg animate-pulse" />
+  ),
+});
 
 interface JobFormData {
   title: string;
@@ -413,18 +422,19 @@ export default function CreateJobPage() {
               </Checkbox.Item>
             </div>
 
-            {/* 복리후생 */}
+            {/* 채용공고 상세설명 */}
             <div>
               <label className="block text-[20px] font-medium text-[#3B394D] mb-3">
-                복리후생
+                채용공고 상세설명
               </label>
-              <Textarea
+              <QuillEditor
+                key="job-create-description-editor"
                 value={formData.benefits}
                 onChange={(value) =>
                   setFormData((prev) => ({ ...prev, benefits: value }))
                 }
-                placeholder="복리후생을 입력해 주세요"
-                rows={4}
+                placeholder="채용공고 상세설명을 입력해 주세요 (이미지, 텍스트 등)"
+                height={400}
               />
             </div>
 
