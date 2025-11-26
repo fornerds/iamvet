@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withAuth } from "@/lib/middleware";
+import { withAdminVerification } from "@/lib/middleware";
 import {
   createApiResponse,
   createErrorResponse,
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   }
 }
 
-export const PUT = withAuth(
+export const PUT = withAdminVerification(
   async (request: NextRequest, context: RouteContext) => {
     try {
       const user = (request as any).user;
@@ -132,7 +132,7 @@ export const PUT = withAuth(
   }
 );
 
-export const DELETE = withAuth(
+export const DELETE = withAdminVerification(
   async (request: NextRequest, context: RouteContext) => {
     try {
       const user = (request as any).user;

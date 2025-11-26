@@ -21,6 +21,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 탈퇴한 계정 확인
+    if (user.deletedAt) {
+      return NextResponse.json(
+        createErrorResponse("탈퇴한 계정입니다"),
+        { status: 403 }
+      );
+    }
+
     const isValidPassword = await comparePassword(
       body.password,
       user.passwordHash

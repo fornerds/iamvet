@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withAuth } from "@/lib/middleware";
+import { withAdminVerification } from "@/lib/middleware";
 import {
   createApiResponse,
   createErrorResponse,
@@ -94,7 +94,7 @@ export async function GET(
   }
 }
 
-export const PUT = withAuth(
+export const PUT = withAdminVerification(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -165,7 +165,7 @@ export const PUT = withAuth(
   }
 );
 
-export const DELETE = withAuth(
+export const DELETE = withAdminVerification(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -194,6 +194,12 @@ export const DELETE = withAuth(
       // 권한 체크: hospitalId가 사용자 ID와 직접 매치되어야 함
       const isAuthorized = job.hospitalId === user.userId;
       
+      console.log("Delete authorization check:", {
+        jobHospitalId: job.hospitalId,
+        userId: user.userId,
+        isAuthorized,
+      });
+      
       if (!isAuthorized) {
         return NextResponse.json(
           createErrorResponse("이 채용공고를 삭제할 권한이 없습니다"),
@@ -202,15 +208,33 @@ export const DELETE = withAuth(
       }
 
       // 채용공고 삭제
-      await deleteJobPosting(jobId);
+      console.log("Attempting to delete job:", jobId);
+      const deleteResult = await deleteJobPosting(jobId);
+      console.log("Delete result:", deleteResult);
+
+      if (!deleteResult) {
+        console.error("Failed to delete job - no rows affected");
+        return NextResponse.json(
+          createErrorResponse("채용공고 삭제에 실패했습니다"),
+          { status: 500 }
+        );
+      }
 
       return NextResponse.json(
         createApiResponse("success", "채용공고가 삭제되었습니다")
       );
     } catch (error) {
       console.error("Job delete error:", error);
+      console.error("Error details:", {
+        message: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       return NextResponse.json(
-        createErrorResponse("채용공고 삭제 중 오류가 발생했습니다"),
+        createErrorResponse(
+          error instanceof Error 
+            ? `채용공고 삭제 중 오류가 발생했습니다: ${error.message}`
+            : "채용공고 삭제 중 오류가 발생했습니다"
+        ),
         { status: 500 }
       );
     }

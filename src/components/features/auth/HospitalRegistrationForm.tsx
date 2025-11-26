@@ -416,52 +416,33 @@ export const HospitalRegistrationForm: React.FC<
     }));
 
     try {
-      // 1단계: Presigned URL 생성
-      const presignedResponse = await fetch('/api/upload/presigned-url', {
+      // 서버를 통한 파일 업로드 (CORS 문제 방지)
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const uploadResponse = await fetch('/api/upload/business-license', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fileName: file.name,
-          fileType: file.type,
-          fileSize: file.size,
-          folder: 'business-licenses'
-        }),
+        body: formData,
       });
 
-      const presignedResult = await presignedResponse.json();
+      const uploadResult = await uploadResponse.json();
 
-      if (presignedResult.status !== "success") {
-        throw new Error(presignedResult.message || 'Presigned URL 생성 실패');
+      if (uploadResult.status !== "success") {
+        throw new Error(uploadResult.message || '파일 업로드 실패');
       }
 
-      // 2단계: S3에 직접 파일 업로드 (CORS 헤더 추가)
-      const uploadResponse = await fetch(presignedResult.data.presignedUrl, {
-        method: 'PUT',
-        body: file,
-        headers: {
-          'Content-Type': file.type,
-        },
-        mode: 'cors',
-      });
-
-      if (uploadResponse.ok) {
-        // 업로드 성공
-        setFormData((prev) => ({
-          ...prev,
-          businessLicense: {
-            file: file,
-            url: presignedResult.data.fileUrl,
-            fileName: presignedResult.data.fileName,
-            fileType: file.type.startsWith('image/') ? 'image' : file.type === 'application/pdf' ? 'pdf' : 'document',
-            mimeType: file.type,
-            fileSize: file.size,
-          }
-        }));
-      } else {
-        throw new Error(`S3 파일 업로드 실패: ${uploadResponse.status} ${uploadResponse.statusText}`);
-      }
+      // 업로드 성공
+      setFormData((prev) => ({
+        ...prev,
+        businessLicense: {
+          file: file,
+          url: uploadResult.data.fileUrl,
+          fileName: uploadResult.data.fileName,
+          fileType: uploadResult.data.fileType || (file.type.startsWith('image/') ? 'image' : file.type === 'application/pdf' ? 'pdf' : 'document'),
+          mimeType: uploadResult.data.mimeType || file.type,
+          fileSize: uploadResult.data.fileSize || file.size,
+        }
+      }));
     } catch (error) {
       console.error('File upload error:', error);
       alert('파일 업로드 중 오류가 발생했습니다: ' + (error instanceof Error ? error.message : '알 수 없는 오류'));

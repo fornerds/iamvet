@@ -222,6 +222,10 @@ export default function TalentManagementPage() {
           alert("로그인이 필요합니다.");
           router.push("/login/hospital");
           return;
+        } else if (response.status === 403 && result.requiresAdminVerification) {
+          // 관리자 인증 필요 안내
+          alert(result.message || "관리자의 인증을 받아야만 서비스를 이용할 수 있습니다. 관리자 인증이 완료될 때까지 기다려주세요.");
+          return;
         }
         throw new Error(result.message || `${actionText} 요청에 실패했습니다.`);
       }

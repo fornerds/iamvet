@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withAuth } from "@/lib/middleware";
+import { withAdminVerification } from "@/lib/middleware";
 import { createApiResponse, createErrorResponse } from "@/lib/utils";
 import { getTransferByIdForEdit } from "@/lib/database";
 
@@ -9,7 +9,7 @@ interface RouteContext {
   }>;
 }
 
-export const GET = withAuth(
+export const GET = withAdminVerification(
   async (request: NextRequest, context: RouteContext) => {
     try {
       const user = (request as any).user;

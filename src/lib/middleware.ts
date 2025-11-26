@@ -38,7 +38,6 @@ export const withAuth = (handler: Function) => {
       let user = await (prisma as any).users.findUnique({
         where: { 
           id: payload.userId,
-          isActive: true
         }
       });
 
@@ -55,7 +54,7 @@ export const withAuth = (handler: Function) => {
             }
           });
           
-          if (socialAccount && socialAccount.user && socialAccount.user.isActive) {
+          if (socialAccount && socialAccount.user) {
             console.log('withAuth: social_accounts.id로 토큰이 생성된 케이스 발견 - 올바른 사용자로 매핑:', {
               socialAccountId: payload.userId,
               actualUserId: socialAccount.user.id,
@@ -100,11 +99,13 @@ export const withAuth = (handler: Function) => {
         userId: payload.userId,
         userType: payload.userType,
         hasToken: !!token,
-        userExists: !!user
+        userExists: !!user,
+        isActive: user.isActive
       });
 
       // 요청 객체에 사용자 정보 추가
       (request as any).user = payload;
+      (request as any).userData = user; // 실제 DB 사용자 데이터도 추가
 
       return handler(request, ...args);
     } catch (error) {
@@ -115,6 +116,44 @@ export const withAuth = (handler: Function) => {
       );
     }
   };
+};
+
+// 관리자 인증이 필요한 작업을 위한 미들웨어 (isActive 체크)
+// withAuth를 먼저 실행한 후 isActive를 체크
+export const withAdminVerification = (handler: Function) => {
+  return withAuth(async (request: NextRequest, ...args: any[]) => {
+    try {
+      const userData = (request as any).userData;
+      
+      if (!userData) {
+        return NextResponse.json(
+          createErrorResponse("사용자 정보를 찾을 수 없습니다"),
+          { status: 401 }
+        );
+      }
+
+      // 관리자 인증 확인 (isActive가 false이면 관리자 인증 미완료)
+      if (!userData.isActive) {
+        return NextResponse.json(
+          {
+            status: "info",
+            message: "관리자의 인증을 받아야만 서비스를 이용할 수 있습니다. 관리자 인증이 완료될 때까지 기다려주세요.",
+            data: { requiresAdminVerification: true },
+            timestamp: new Date().toISOString(),
+          },
+          { status: 403 }
+        );
+      }
+
+      return handler(request, ...args);
+    } catch (error) {
+      console.error("withAdminVerification middleware error:", error);
+      return NextResponse.json(
+        createErrorResponse("인증 처리 중 오류가 발생했습니다"),
+        { status: 500 }
+      );
+    }
+  });
 };
 
 export const withValidation = (schema: any) => {

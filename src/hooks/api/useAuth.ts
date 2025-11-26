@@ -115,6 +115,7 @@ export function useCurrentUser() {
           phone: result.user.phone,
           birthDate: result.user.birthDate ? (typeof result.user.birthDate === 'string' ? result.user.birthDate : result.user.birthDate.toISOString().split('T')[0]) : undefined,
           provider: result.user.provider,
+          isActive: result.user.isActive, // 관리자 인증 상태 추가
         };
         console.log('[useCurrentUser] returning server user data:', userData);
         

@@ -146,18 +146,19 @@ export async function login(credentials: LoginCredentials) {
     if (userType === "VETERINARY_STUDENT") {
       // For veterinary students, check both VETERINARY_STUDENT and VETERINARIAN userTypes
       // since they might be stored as either depending on registration method
+      // isActive 필터 제거 - 로그인은 가능하지만 서비스 이용은 제한됨
       result = await sql`
         SELECT * FROM users 
         WHERE "loginId" = ${email} 
-        AND ("userType" = 'VETERINARY_STUDENT' OR "userType" = 'VETERINARIAN') 
-        AND "isActive" = true
+        AND ("userType" = 'VETERINARY_STUDENT' OR "userType" = 'VETERINARIAN')
+        AND "deletedAt" IS NULL
       `;
     } else if (userType) {
       result =
-        await sql`SELECT * FROM users WHERE "loginId" = ${email} AND "userType" = ${userType} AND "isActive" = true`;
+        await sql`SELECT * FROM users WHERE "loginId" = ${email} AND "userType" = ${userType} AND "deletedAt" IS NULL`;
     } else {
       result =
-        await sql`SELECT * FROM users WHERE "loginId" = ${email} AND "isActive" = true`;
+        await sql`SELECT * FROM users WHERE "loginId" = ${email} AND "deletedAt" IS NULL`;
     }
 
     if (result.length === 0) {
@@ -381,9 +382,9 @@ export async function getCurrentUser(): Promise<{
       throw error;
     }
 
-    // Get current user data
+    // Get current user data (isActive 필터 제거 - 클라이언트에서 체크)
     const result = await sql`
-      SELECT * FROM users WHERE id = ${decoded.userId} AND "isActive" = true
+      SELECT * FROM users WHERE id = ${decoded.userId}
     `;
 
     if (result.length === 0) {
@@ -1045,7 +1046,7 @@ export async function registerVeterinarian(data: VeterinarianRegisterData) {
         ${profileImage}, 'NORMAL', ${termsAgreed ? currentDate : null}, ${
       privacyAgreed ? currentDate : null
     }, ${marketingAgreed ? currentDate : null},
-        true, ${currentDate}, ${currentDate}
+        false, ${currentDate}, ${currentDate}
       )
       RETURNING *
     `;
@@ -1143,7 +1144,7 @@ export async function registerVeterinaryStudent(
         ${profileImage}, 'NORMAL', ${termsAgreed ? currentDate : null}, ${
       privacyAgreed ? currentDate : null
     }, ${marketingAgreed ? currentDate : null},
-        true, ${currentDate}, ${currentDate}
+        false, ${currentDate}, ${currentDate}
       )
       RETURNING *
     `;
@@ -2488,7 +2489,6 @@ interface SocialVeterinarianRegistrationData {
   termsAgreed: boolean;
   privacyAgreed: boolean;
   marketingAgreed: boolean;
-  kakaoTalkUuid?: string; // 카카오톡 UUID (플러스친구 메시지 발송용)
 }
 
 interface SocialVeterinaryStudentRegistrationData {
@@ -2505,7 +2505,6 @@ interface SocialVeterinaryStudentRegistrationData {
   termsAgreed: boolean;
   privacyAgreed: boolean;
   marketingAgreed: boolean;
-  kakaoTalkUuid?: string; // 카카오톡 UUID (플러스친구 메시지 발송용)
 }
 
 export async function completeSocialVeterinarianRegistration(
@@ -2531,7 +2530,6 @@ export async function completeSocialVeterinarianRegistration(
       termsAgreed,
       privacyAgreed,
       marketingAgreed,
-      kakaoTalkUuid,
     } = data;
 
     // Check if social user already exists
@@ -2632,7 +2630,7 @@ export async function completeSocialVeterinarianRegistration(
           ${userId}, ${email}, ${phone}, null, 'VETERINARIAN', ${profileImage}, ${provider.toUpperCase()},
           ${realName || name}, ${nickname},
           ${termsAgreed ? currentDate : null}, ${privacyAgreed ? currentDate : null}, ${marketingAgreed ? currentDate : null},
-          true, ${currentDate}, ${currentDate}
+          false, ${currentDate}, ${currentDate}
         )
         RETURNING *
       `;
@@ -2722,21 +2720,20 @@ export async function completeSocialVeterinarianRegistration(
       path: "/",
     });
 
-    // 카카오 회원가입인 경우 플러스친구 환영 메시지 발송 (비동기 처리)
-    if (provider.toUpperCase() === "KAKAO" && kakaoTalkUuid) {
+    // 카카오 회원가입인 경우 알림톡 환영 메시지 발송 (비동기 처리)
+    if (provider.toUpperCase() === "KAKAO" && phone) {
       // 비동기로 처리하여 회원가입 성공에 영향을 주지 않도록 함
       setImmediate(async () => {
         try {
           const { KakaoBusinessService } = await import("@/services/KakaoBusinessService");
-          const userName = realName || name || nickname || "회원";
-          const result = await KakaoBusinessService.sendWelcomeMessage(kakaoTalkUuid, userName);
+          const result = await KakaoBusinessService.sendWelcomeMessage(phone);
           if (result.success) {
-            console.log("카카오 플러스친구 환영 메시지 발송 성공");
+            console.log("카카오 알림톡 환영 메시지 발송 성공");
           } else {
-            console.error("카카오 플러스친구 환영 메시지 발송 실패:", result.error);
+            console.error("카카오 알림톡 환영 메시지 발송 실패:", result.error);
           }
         } catch (error) {
-          console.error("플러스친구 메시지 발송 중 오류:", error);
+          console.error("카카오 알림톡 발송 중 오류:", error);
         }
       });
     }
@@ -2797,7 +2794,6 @@ export async function completeSocialVeterinaryStudentRegistration(
       termsAgreed,
       privacyAgreed,
       marketingAgreed,
-      kakaoTalkUuid,
     } = data;
 
     // Check if social user already exists
@@ -2910,7 +2906,7 @@ export async function completeSocialVeterinaryStudentRegistration(
           ${userId}, ${universityEmail}, ${socialEmail}, ${phone}, ${nickname}, ${realName || name}, ${birthDate ? new Date(birthDate) : null}, null, 'VETERINARY_STUDENT', ${profileImage}, ${provider.toUpperCase()},
           ${universityEmail},
           ${termsAgreed ? currentDate : null}, ${privacyAgreed ? currentDate : null}, ${marketingAgreed ? currentDate : null},
-          true, ${currentDate}, ${currentDate}
+          false, ${currentDate}, ${currentDate}
         )
         RETURNING *
       `;
@@ -3003,21 +2999,20 @@ export async function completeSocialVeterinaryStudentRegistration(
       path: "/",
     });
 
-    // 카카오 회원가입인 경우 플러스친구 환영 메시지 발송 (비동기 처리)
-    if (provider.toUpperCase() === "KAKAO" && kakaoTalkUuid) {
+    // 카카오 회원가입인 경우 알림톡 환영 메시지 발송 (비동기 처리)
+    if (provider.toUpperCase() === "KAKAO" && phone) {
       // 비동기로 처리하여 회원가입 성공에 영향을 주지 않도록 함
       setImmediate(async () => {
         try {
           const { KakaoBusinessService } = await import("@/services/KakaoBusinessService");
-          const userName = realName || name || nickname || "회원";
-          const result = await KakaoBusinessService.sendWelcomeMessage(kakaoTalkUuid, userName);
+          const result = await KakaoBusinessService.sendWelcomeMessage(phone);
           if (result.success) {
-            console.log("카카오 플러스친구 환영 메시지 발송 성공");
+            console.log("카카오 알림톡 환영 메시지 발송 성공");
           } else {
-            console.error("카카오 플러스친구 환영 메시지 발송 실패:", result.error);
+            console.error("카카오 알림톡 환영 메시지 발송 실패:", result.error);
           }
         } catch (error) {
-          console.error("플러스친구 메시지 발송 중 오류:", error);
+          console.error("카카오 알림톡 발송 중 오류:", error);
         }
       });
     }

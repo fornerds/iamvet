@@ -291,6 +291,13 @@ export default function CreateTransferPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // 관리자 인증 필요 안내 (403 에러)
+        if (response.status === 403 && errorData.requiresAdminVerification) {
+          alert(errorData.message || "관리자의 인증을 받아야만 서비스를 이용할 수 있습니다. 관리자 인증이 완료될 때까지 기다려주세요.");
+          return;
+        }
+        
         throw new Error(
           errorData.message || "양도양수 게시글 등록에 실패했습니다."
         );

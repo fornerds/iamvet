@@ -106,8 +106,8 @@ export const createUser = async (userData: any) => {
   const currentDate = new Date();
   const query = `
     INSERT INTO users (id, username, "loginId", nickname, email, "passwordHash", "userType", phone, "realName", "profileImage", 
-                      "termsAgreedAt", "privacyAgreedAt", "marketingAgreedAt", "createdAt", "updatedAt")
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                      "termsAgreedAt", "privacyAgreedAt", "marketingAgreedAt", "isActive", "createdAt", "updatedAt")
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
     RETURNING *
   `;
 
@@ -125,6 +125,7 @@ export const createUser = async (userData: any) => {
     userData.termsAgreedAt,
     userData.privacyAgreedAt,
     userData.marketingAgreedAt,
+    false, // 회원가입 시 기본적으로 비활성화 (관리자 인증 필요)
     currentDate,
     currentDate,
   ];
@@ -4887,50 +4888,117 @@ export const deleteTransfer = async (transferId: string) => {
   return (result.rowCount ?? 0) > 0;
 };
 
-export const getTransfersWithPagination = async (page = 1, limit = 10) => {
-  const offset = (page - 1) * limit;
+export const getTransfersWithPagination = async (page = 1, limit = 10, sort: string = "latest") => {
+  try {
+    const offset = (page - 1) * limit;
 
-  // Count query
-  const countQuery = `
-    SELECT COUNT(*) as total
-    FROM transfers 
-    WHERE "deletedAt" IS NULL AND status != 'DISABLED' AND "isDraft" = false
-  `;
-  const countResult = await pool.query(countQuery);
-  const total = Number(countResult.rows[0]?.total || 0); // Ensure it's a Number
+    console.log(`[getTransfersWithPagination] Starting query - page: ${page}, limit: ${limit}, offset: ${offset}, sort: ${sort}`);
 
-  // Data query
-  const query = `
-    SELECT id, "userId", title, description, location, base_address, detail_address, sido, sigungu, 
-           price, category, images, documents, status, area, views, "isDraft", "createdAt", "updatedAt"
-    FROM transfers 
-    WHERE "deletedAt" IS NULL AND status != 'DISABLED' AND "isDraft" = false
-    ORDER BY "createdAt" DESC 
-    LIMIT $1 OFFSET $2
-  `;
-  const result = await pool.query(query, [limit, offset]);
+    // Count query
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM transfers 
+      WHERE "deletedAt" IS NULL AND status != 'DISABLED' AND "isDraft" = false
+    `;
+    console.log(`[getTransfersWithPagination] Executing count query`);
+    const countResult = await pool.query(countQuery);
+    const total = Number(countResult.rows[0]?.total || 0); // Ensure it's a Number
+    console.log(`[getTransfersWithPagination] Total count: ${total}`);
 
-  const transfers = result.rows.map((transfer) => ({
-    ...transfer,
-    images: transfer.images
-      ? typeof transfer.images === "string"
-        ? JSON.parse(transfer.images)
-        : transfer.images
-      : [],
-    documents: transfer.documents
-      ? typeof transfer.documents === "string"
-        ? JSON.parse(transfer.documents)
-        : transfer.documents
-      : [],
-  }));
+    // Sort order 결정 (안전한 값만 허용)
+    let orderByColumn = '"createdAt"';
+    let orderByDirection = 'DESC';
+    
+    if (sort === "oldest") {
+      orderByColumn = '"createdAt"';
+      orderByDirection = 'ASC';
+    } else if (sort === "price_high") {
+      orderByColumn = 'price';
+      orderByDirection = 'DESC';
+    } else if (sort === "price_low") {
+      orderByColumn = 'price';
+      orderByDirection = 'ASC';
+    } else if (sort === "views") {
+      orderByColumn = 'views';
+      orderByDirection = 'DESC';
+    }
+    // 기본값: latest (createdAt DESC)
 
-  return {
-    data: transfers,
-    total: total,
-    page: page,
-    limit: limit,
-    totalPages: Math.ceil(total / limit),
-  };
+    // Data query (ORDER BY는 안전한 값만 사용)
+    const query = `
+      SELECT id, "userId", title, description, location, base_address, detail_address, sido, sigungu, 
+             price, category, images, documents, status, area, views, "isDraft", "createdAt", "updatedAt"
+      FROM transfers 
+      WHERE "deletedAt" IS NULL AND status != 'DISABLED' AND "isDraft" = false
+      ORDER BY ${orderByColumn} ${orderByDirection}
+      LIMIT $1 OFFSET $2
+    `;
+    console.log(`[getTransfersWithPagination] Executing data query with limit: ${limit}, offset: ${offset}, orderBy: ${orderByColumn} ${orderByDirection}`);
+    
+    const result = await pool.query(query, [limit, offset]);
+    console.log(`[getTransfersWithPagination] Retrieved ${result.rows.length} transfers`);
+
+    const transfers = result.rows.map((transfer) => {
+      let images = [];
+      let documents = [];
+      
+      try {
+        if (transfer.images) {
+          images = typeof transfer.images === "string"
+            ? JSON.parse(transfer.images)
+            : transfer.images;
+        }
+      } catch (error) {
+        console.error("Error parsing images for transfer:", transfer.id, error);
+        images = [];
+      }
+      
+      try {
+        if (transfer.documents) {
+          documents = typeof transfer.documents === "string"
+            ? JSON.parse(transfer.documents)
+            : transfer.documents;
+        }
+      } catch (error) {
+        console.error("Error parsing documents for transfer:", transfer.id, error);
+        documents = [];
+      }
+      
+      return {
+        ...transfer,
+        images,
+        documents,
+      };
+    });
+
+    console.log(`[getTransfersWithPagination] Successfully processed ${transfers.length} transfers`);
+
+    return {
+      data: transfers,
+      total: total,
+      page: page,
+      limit: limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  } catch (error) {
+    console.error("=== getTransfersWithPagination Error ===");
+    console.error("Error:", error);
+    console.error("Error name:", error instanceof Error ? error.name : "Unknown");
+    console.error("Error message:", error instanceof Error ? error.message : "Unknown error");
+    console.error("Error stack:", error instanceof Error ? error.stack : "No stack");
+    
+    // 데이터베이스 연결 상태 확인
+    if (error instanceof Error) {
+      if (error.message.includes("connect") || error.message.includes("timeout")) {
+        console.error("Database connection issue detected");
+      }
+      if (error.message.includes("relation") || error.message.includes("does not exist")) {
+        console.error("Database table/column issue detected");
+      }
+    }
+    
+    throw error; // Re-throw to be handled by caller
+  }
 };
 
 export const createLecture = async (lectureData: any) => {

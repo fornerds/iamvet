@@ -74,11 +74,19 @@ const BookmarkedJobsCard: React.FC<BookmarkedJobsCardProps> = ({ jobs }) => {
         // 좋아요 해제 성공 시 목록 새로고침
         await fetchBookmarkedJobs();
       } else {
-        throw new Error("북마크 해제에 실패했습니다.");
+        const errorData = await response.json();
+        
+        // 관리자 인증 필요 안내 (403 에러)
+        if (response.status === 403 && errorData.requiresAdminVerification) {
+          alert(errorData.message || "관리자의 인증을 받아야만 서비스를 이용할 수 있습니다. 관리자 인증이 완료될 때까지 기다려주세요.");
+          return;
+        }
+        
+        throw new Error(errorData.message || "북마크 해제에 실패했습니다.");
       }
     } catch (error) {
       console.error("북마크 처리 실패:", error);
-      alert("북마크 처리 중 오류가 발생했습니다.");
+      alert(error instanceof Error ? error.message : "북마크 처리 중 오류가 발생했습니다.");
     }
   };
   return (

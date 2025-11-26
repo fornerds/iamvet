@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withAuth } from "@/lib/middleware";
+import { withAdminVerification } from "@/lib/middleware";
 import { createApiResponse, createErrorResponse } from "@/lib/utils";
 import { 
   getForumComments, 
@@ -45,8 +45,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
   }
 }
 
-// 댓글 생성 (로그인 필요)
-export const POST = withAuth(async (request: NextRequest, context: RouteContext) => {
+// 댓글 생성 (관리자 인증 필요)
+export const POST = withAdminVerification(async (request: NextRequest, context: RouteContext) => {
   try {
     const user = (request as any).user;
     const params = await context.params;

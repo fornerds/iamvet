@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withAuth } from "@/lib/middleware";
+import { withAdminVerification } from "@/lib/middleware";
 import { createApiResponse, createErrorResponse } from "@/lib/utils";
 import {
   getVeterinarianProfile,
@@ -8,7 +8,7 @@ import {
 import bcrypt from "bcryptjs";
 import { sql } from "@/lib/db";
 
-export const GET = withAuth(async (request: NextRequest) => {
+export const GET = withAdminVerification(async (request: NextRequest) => {
   console.log('=== GET API 호출됨 ===');
   try {
     const user = (request as any).user;
@@ -98,7 +98,7 @@ export const GET = withAuth(async (request: NextRequest) => {
   }
 });
 
-export const PUT = withAuth(async (request: NextRequest) => {
+export const PUT = withAdminVerification(async (request: NextRequest) => {
   console.log('=================================');
   console.log('=== PUT API 호출됨 ===');
   console.log('=================================');

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withAuth } from "@/lib/middleware";
+import { withAdminVerification } from "@/lib/middleware";
 import { createApiResponse, createErrorResponse } from "@/lib/utils";
 import { getJobByIdWithHospital, updateJobPosting } from "@/lib/database";
 
-export const PUT = withAuth(
+export const PUT = withAdminVerification(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }

@@ -169,7 +169,16 @@ export default function ForumDetailPage({
         const newState = toggleForumBookmark(id);
         setIsBookmarked(newState);
       } else {
-        console.error("북마크 처리 실패:", await response.text());
+        const errorData = await response.json();
+        
+        // 관리자 인증 필요 안내 (403 에러)
+        if (response.status === 403 && errorData.requiresAdminVerification) {
+          alert(errorData.message || "관리자의 인증을 받아야만 서비스를 이용할 수 있습니다. 관리자 인증이 완료될 때까지 기다려주세요.");
+          return;
+        }
+        
+        console.error("북마크 처리 실패:", errorData.message || "알 수 없는 오류");
+        alert(`북마크 처리 중 오류가 발생했습니다: ${errorData.message || "알 수 없는 오류"}`);
       }
     } catch (error) {
       console.error("북마크 처리 중 오류:", error);

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createApiResponse, createErrorResponse } from '@/lib/utils';
-import { withAuth } from '@/lib/middleware';
+import { withAdminVerification } from '@/lib/middleware';
 import { prisma } from '@/lib/prisma';
 
-export const POST = withAuth(async (
+export const POST = withAdminVerification(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) => {
@@ -48,7 +48,7 @@ export const POST = withAuth(async (
   }
 });
 
-export const DELETE = withAuth(async (
+export const DELETE = withAdminVerification(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) => {

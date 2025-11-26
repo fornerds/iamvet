@@ -43,7 +43,7 @@ export async function extractS3Key(url: string): Promise<string | null> {
 // 이미지 업로드 (File 객체로부터)
 export async function uploadImage(
   file: File,
-  folder: 'profiles' | 'licenses' | 'hospitals' | 'resumes' | 'transfers' | 'advertisements' | 'lecture-materials' | 'hospital-facilities' | 'announcement-images' = 'profiles'
+  folder: 'profiles' | 'licenses' | 'hospitals' | 'resumes' | 'transfers' | 'advertisements' | 'lecture-materials' | 'hospital-facilities' | 'announcement-images' | 'job-postings' = 'profiles'
 ): Promise<UploadResult> {
   console.log('[S3] uploadImage 시작:', {
     fileName: file.name,
@@ -101,7 +101,7 @@ export async function uploadImage(
 // 이미지 업로드 (Base64 문자열로부터)
 export async function uploadImageFromBase64(
   base64Data: string,
-  folder: 'profiles' | 'licenses' | 'hospitals' | 'resumes' | 'transfers' | 'advertisements' | 'lecture-materials' | 'hospital-facilities' | 'announcement-images' = 'profiles',
+  folder: 'profiles' | 'licenses' | 'hospitals' | 'resumes' | 'transfers' | 'advertisements' | 'lecture-materials' | 'hospital-facilities' | 'announcement-images' | 'job-postings' = 'profiles',
   fileName?: string
 ): Promise<UploadResult> {
   try {

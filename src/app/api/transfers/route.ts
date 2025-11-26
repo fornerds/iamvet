@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withAuth } from "@/lib/middleware";
+import { withAuth, withAdminVerification } from "@/lib/middleware";
 import { createApiResponse, createErrorResponse } from "@/lib/utils";
 import { getTransfersWithPagination, createTransfer } from "@/lib/database";
 import { verifyToken } from "@/lib/auth";
@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
+    console.log("[Transfers API] GET request received");
     // 사용자 정보 확인 (선택적) - Bearer token과 쿠키 인증 모두 지원
     let userId: string | undefined;
 
@@ -37,12 +38,13 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
     const keyword = searchParams.get("keyword") || undefined;
     const category = searchParams.get("category") || undefined;
+    const sort = searchParams.get("sort") || "latest"; // sort 파라미터 추가
 
     // 북마크된 게시글만 조회하는 경우
     const bookmarked = searchParams.get("bookmarked") === "true";
 
     console.log(
-      `[Transfers API] GET request - page: ${page}, limit: ${limit}, bookmarked: ${bookmarked}`
+      `[Transfers API] GET request - page: ${page}, limit: ${limit}, sort: ${sort}, bookmarked: ${bookmarked}`
     );
 
     let transfers;
@@ -138,10 +140,12 @@ export async function GET(request: NextRequest) {
       }
     } else {
       // 일반 양도양수 목록 조회
-      const paginationResult = await getTransfersWithPagination(page, limit);
+      console.log(`[Transfers API] Calling getTransfersWithPagination with page: ${page}, limit: ${limit}, sort: ${sort}`);
+      const paginationResult = await getTransfersWithPagination(page, limit, sort);
       transfers = paginationResult.data;
       total = paginationResult.total;
       totalPages = paginationResult.totalPages;
+      console.log(`[Transfers API] Successfully retrieved ${transfers.length} transfers`);
     }
 
     // 좋아요 정보 조회 (로그인한 경우에만)
@@ -182,15 +186,27 @@ export async function GET(request: NextRequest) {
       })
     );
   } catch (error) {
-    console.error("Transfers list error:", error);
+    console.error("=== Transfers API Error ===");
+    console.error("Error:", error);
+    console.error("Error name:", error instanceof Error ? error.name : "Unknown");
+    console.error("Error message:", error instanceof Error ? error.message : "Unknown error");
+    console.error("Error stack:", error instanceof Error ? error.stack : "No stack");
+    
+    // 데이터베이스 연결 상태 확인
+    if (error instanceof Error && error.message.includes("connect")) {
+      console.error("Database connection error detected");
+    }
+    
     return NextResponse.json(
-      createErrorResponse("양도양수 목록 조회 중 오류가 발생했습니다"),
+      createErrorResponse(
+        `양도양수 목록 조회 중 오류가 발생했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`
+      ),
       { status: 500 }
     );
   }
 }
 
-export const POST = withAuth(async (request: NextRequest) => {
+export const POST = withAdminVerification(async (request: NextRequest) => {
   try {
     const user = (request as any).user;
     const transferData = await request.json();

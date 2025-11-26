@@ -1,9 +1,9 @@
 import { uploadFile } from "@/lib/s3";
 import { createApiResponse, createErrorResponse } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
-import { withAuth } from "@/lib/middleware";
+import { withAdminVerification } from "@/lib/middleware";
 
-export const POST = withAuth(async (request: NextRequest) => {
+export const POST = withAdminVerification(async (request: NextRequest) => {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;

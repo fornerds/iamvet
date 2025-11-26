@@ -88,6 +88,13 @@ export default function ForumCard({
         }
       } else {
         const errorData = await response.json();
+        
+        // 관리자 인증 필요 안내 (403 에러)
+        if (response.status === 403 && errorData.requiresAdminVerification) {
+          alert(errorData.message || "관리자의 인증을 받아야만 서비스를 이용할 수 있습니다. 관리자 인증이 완료될 때까지 기다려주세요.");
+          return;
+        }
+        
         if (errorData.message === "이미 북마크한 임상포럼입니다") {
           console.warn("북마크 처리 실패: 이미 북마크한 임상포럼입니다. UI 상태를 동기화합니다.");
           // 이미 북마크된 상태이므로, UI 상태를 강제로 북마크됨으로 설정

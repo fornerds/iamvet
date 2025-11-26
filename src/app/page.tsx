@@ -338,10 +338,17 @@ export default function HomePage() {
       const result = await response.json();
 
       if (!response.ok) {
-        console.error(`[Resume Like] ${actionText} 실패:`, result);
-
         // 오류 발생 시 상태 롤백
         setResumeLike(id, isCurrentlyLiked);
+
+        // 관리자 인증 필요 안내 (403 에러) - 먼저 처리
+        if (response.status === 403) {
+          alert(result.message || "관리자의 인증을 받아야만 서비스를 이용할 수 있습니다. 관리자 인증이 완료될 때까지 기다려주세요.");
+          return;
+        }
+
+        // 다른 에러는 로그 출력
+        console.error(`[Resume Like] ${actionText} 실패:`, result);
 
         if (response.status === 404) {
           console.warn("이력서를 찾을 수 없습니다:", resumeId);
@@ -405,10 +412,17 @@ export default function HomePage() {
       const result = await response.json();
 
       if (!response.ok) {
-        console.error(`[Job Like] ${actionText} 실패:`, result);
-
         // 오류 발생 시 상태 롤백
         setJobLike(id, isCurrentlyLiked);
+
+        // 관리자 인증 필요 안내 (403 에러) - 먼저 처리
+        if (response.status === 403) {
+          alert(result.message || "관리자의 인증을 받아야만 서비스를 이용할 수 있습니다. 관리자 인증이 완료될 때까지 기다려주세요.");
+          return;
+        }
+
+        // 다른 에러는 로그 출력
+        console.error(`[Job Like] ${actionText} 실패:`, result);
 
         if (response.status === 404) {
           console.warn("채용공고를 찾을 수 없습니다:", jobId);
@@ -474,10 +488,17 @@ export default function HomePage() {
       const result = await response.json();
 
       if (!response.ok) {
-        console.error(`[Lecture Like] ${actionText} 실패:`, result);
-
         // 오류 발생 시 상태 롤백
         setLectureLike(id, isCurrentlyLiked);
+
+        // 관리자 인증 필요 안내 (403 에러) - 먼저 처리
+        if (response.status === 403) {
+          alert(result.message || "관리자의 인증을 받아야만 서비스를 이용할 수 있습니다. 관리자 인증이 완료될 때까지 기다려주세요.");
+          return;
+        }
+
+        // 다른 에러는 로그 출력
+        console.error(`[Lecture Like] ${actionText} 실패:`, result);
 
         if (response.status === 404) {
           console.warn("강의를 찾을 수 없습니다:", lectureId);
@@ -543,10 +564,17 @@ export default function HomePage() {
       const result = await response.json();
 
       if (!response.ok) {
-        console.error(`[Transfer Like] ${actionText} 실패:`, result);
-
         // 오류 발생 시 상태 롤백
         setTransferLike(id, isCurrentlyLiked);
+
+        // 관리자 인증 필요 안내 (403 에러) - 먼저 처리
+        if (response.status === 403) {
+          alert(result.message || "관리자의 인증을 받아야만 서비스를 이용할 수 있습니다. 관리자 인증이 완료될 때까지 기다려주세요.");
+          return;
+        }
+
+        // 다른 에러는 로그 출력
+        console.error(`[Transfer Like] ${actionText} 실패:`, result);
 
         if (response.status === 404) {
           console.warn("양도양수를 찾을 수 없습니다:", transferId);

@@ -128,8 +128,6 @@ export class AuthService {
                 provider,
                 providerId,
                 userType,
-                // 카카오톡 UUID 추가 (플러스친구 메시지 발송용)
-                kakaoTalkUuid: socialUserData.socialData?.kakaoTalkUuid,
               },
             },
             message: `${provider} 로그인 성공 - 회원가입 완료 필요`,

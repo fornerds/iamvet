@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
         provider, "isActive", "termsAgreedAt", "privacyAgreedAt", "marketingAgreedAt"
       ) VALUES (
         ${userId}, ${actualLoginId}, ${actualLoginId}, ${nickname}, ${email}, ${phone}, ${realName}, ${hashedPassword}, 
-        'VETERINARY_STUDENT', ${profileImageUrl}, 'NORMAL', true,
+        'VETERINARY_STUDENT', ${profileImageUrl}, 'NORMAL', false,
         ${termsAgreed ? new Date() : null},
         ${privacyAgreed ? new Date() : null}, 
         ${marketingAgreed ? new Date() : null}

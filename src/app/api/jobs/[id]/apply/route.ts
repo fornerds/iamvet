@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withAuth } from "@/lib/middleware";
+import { withAdminVerification } from "@/lib/middleware";
 import { createApplication, query } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 import { NotificationType } from "@prisma/client";
@@ -7,7 +7,7 @@ import { nanoid } from "nanoid";
 import { getVeterinarianResumeAction } from "@/actions/resume";
 import { getTokenFromStorage } from "@/utils/auth";
 
-export const POST = withAuth(
+export const POST = withAdminVerification(
   async (request: NextRequest, context: any) => {
     try {
       const params = await context.params;

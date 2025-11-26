@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withAuth } from "@/lib/middleware";
+import { withAdminVerification } from "@/lib/middleware";
 import { createApiResponse, createErrorResponse } from "@/lib/utils";
 import {
   getLectureComments,
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   }
 }
 
-export const POST = withAuth(
+export const POST = withAdminVerification(
   async (request: NextRequest, context: RouteContext) => {
     try {
       const user = (request as any).user;

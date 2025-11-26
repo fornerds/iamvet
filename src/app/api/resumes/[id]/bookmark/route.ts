@@ -4,11 +4,11 @@ import {
   deleteResumeBookmark,
   getResumeBookmark,
 } from "@/lib/database";
-import { withAuth } from "@/lib/middleware";
+import { withAdminVerification } from "@/lib/middleware";
 import { createApiResponse } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 
-export const POST = withAuth(
+export const POST = withAdminVerification(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -54,7 +54,7 @@ export const POST = withAuth(
   }
 );
 
-export const DELETE = withAuth(
+export const DELETE = withAdminVerification(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }

@@ -1,6 +1,6 @@
 /**
  * 카카오 비즈니스 API 서비스
- * 플러스친구 메시지 발송 기능 제공
+ * 알림톡 템플릿 기반 메시지 발송 기능 제공
  */
 
 interface KakaoBusinessTokenResponse {
@@ -12,17 +12,9 @@ interface KakaoBusinessTokenResponse {
   scope?: string;
 }
 
-interface KakaoTalkMessageRequest {
-  receiver_uuids: string[];
-  template_object: {
-    object_type: string;
-    text: string;
-    link: {
-      web_url?: string;
-      mobile_web_url?: string;
-    };
-    button_title?: string;
-  };
+interface AlimTalkTemplateRequest {
+  template_id: string;
+  template_args?: Record<string, string>;
 }
 
 interface SendMessageResult {
@@ -85,43 +77,15 @@ export class KakaoBusinessService {
   }
 
   /**
-   * 카카오톡 친구 목록 조회 (UUID 가져오기)
-   * @param userAccessToken 사용자 액세스 토큰 (카카오 로그인 시 받은 토큰)
+   * 카카오 알림톡 템플릿 발송
+   * @param phoneNumber 수신자 전화번호 (하이픈 없이 숫자만)
+   * @param templateId 템플릿 ID (카카오 비즈니스 관리자 센터에서 등록한 템플릿)
+   * @param templateArgs 템플릿 변수 (템플릿에 사용된 변수명과 값)
    */
-  static async getFriendUuids(userAccessToken: string): Promise<string[]> {
-    try {
-      const response = await fetch("https://kapi.kakao.com/v1/api/talk/friends", {
-        headers: {
-          Authorization: `Bearer ${userAccessToken}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("카카오톡 친구 목록 조회 실패:", errorData);
-        return [];
-      }
-
-      const data = await response.json();
-      // 친구 목록에서 UUID 추출
-      return data.elements?.map((friend: any) => friend.uuid) || [];
-    } catch (error) {
-      console.error("카카오톡 친구 목록 조회 오류:", error);
-      return [];
-    }
-  }
-
-  /**
-   * 카카오톡 플러스친구 메시지 발송
-   * @param receiverUuid 카카오톡 사용자 UUID (카카오 로그인 시 받은 정보 또는 친구 목록에서 조회)
-   * @param message 메시지 내용
-   * @param linkUrl 링크 URL (선택)
-   */
-  static async sendPlusFriendMessage(
-    receiverUuid: string,
-    message: string,
-    linkUrl?: string
+  static async sendAlimTalk(
+    phoneNumber: string,
+    templateId: string,
+    templateArgs?: Record<string, string>
   ): Promise<SendMessageResult> {
     try {
       // 카카오 비즈니스 API 사용 여부 확인
@@ -143,23 +107,33 @@ export class KakaoBusinessService {
         };
       }
 
+      // 템플릿 ID 확인
+      if (!templateId) {
+        console.error("알림톡 템플릿 ID가 설정되지 않았습니다.");
+        return {
+          success: false,
+          error: "알림톡 템플릿 ID가 설정되지 않았습니다.",
+        };
+      }
+
       // 액세스 토큰 발급
       const accessToken = await this.getAccessToken();
 
-      // 메시지 템플릿 구성
-      const templateObject: KakaoTalkMessageRequest["template_object"] = {
-        object_type: "text",
-        text: message,
-        link: {
-          web_url: linkUrl || process.env.NEXT_PUBLIC_SITE_URL || "https://www.iam-vet.com",
-          mobile_web_url: linkUrl || process.env.NEXT_PUBLIC_SITE_URL || "https://www.iam-vet.com",
-        },
-        button_title: "아이엠벳 바로가기",
+      // 전화번호 형식 정리 (하이픈 제거)
+      const cleanPhoneNumber = phoneNumber.replace(/[^0-9]/g, "");
+
+      // 알림톡 발송 API 호출
+      // 참고: https://developers.kakao.com/docs/latest/ko/kakaotalk-rest-api/alimtalk
+      const requestBody: AlimTalkTemplateRequest = {
+        template_id: templateId,
       };
 
-      // 카카오톡 메시지 발송 API 호출
+      if (templateArgs && Object.keys(templateArgs).length > 0) {
+        requestBody.template_args = templateArgs;
+      }
+
       const response = await fetch(
-        "https://kapi.kakao.com/v1/api/talk/friends/message/default/send",
+        "https://kapi.kakao.com/v1/api/talk/memo/send",
         {
           method: "POST",
           headers: {
@@ -167,61 +141,66 @@ export class KakaoBusinessService {
             "Content-Type": "application/x-www-form-urlencoded",
           },
           body: new URLSearchParams({
-            receiver_uuids: JSON.stringify([receiverUuid]),
-            template_object: JSON.stringify(templateObject),
+            receiver_phone_number: cleanPhoneNumber,
+            template_id: templateId,
+            ...(templateArgs && Object.keys(templateArgs).length > 0
+              ? { template_args: JSON.stringify(templateArgs) }
+              : {}),
           }),
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("카카오톡 메시지 발송 실패:", errorData);
+        console.error("카카오 알림톡 발송 실패:", errorData);
         return {
           success: false,
-          error: errorData.msg || errorData.error_description || "메시지 발송 실패",
+          error: errorData.msg || errorData.error_description || "알림톡 발송 실패",
         };
       }
 
       const result = await response.json();
-      console.log("카카오톡 메시지 발송 성공:", result);
+      console.log("카카오 알림톡 발송 성공:", result);
 
       return {
         success: true,
-        message: "메시지가 성공적으로 발송되었습니다.",
+        message: "알림톡이 성공적으로 발송되었습니다.",
       };
     } catch (error) {
-      console.error("카카오톡 메시지 발송 오류:", error);
+      console.error("카카오 알림톡 발송 오류:", error);
       return {
         success: false,
         error:
           error instanceof Error
             ? error.message
-            : "카카오톡 메시지 발송 중 오류가 발생했습니다.",
+            : "카카오 알림톡 발송 중 오류가 발생했습니다.",
       };
     }
   }
 
   /**
-   * 카카오 회원가입 환영 메시지 발송
-   * @param receiverUuid 카카오톡 사용자 UUID
-   * @param userName 사용자 이름 (현재는 사용하지 않음)
+   * 카카오 회원가입 환영 알림톡 발송
+   * @param phoneNumber 수신자 전화번호
    */
-  static async sendWelcomeMessage(
-    receiverUuid: string,
-    userName: string
-  ): Promise<SendMessageResult> {
-    const welcomeMessage = `안녕하세요 😊
+  static async sendWelcomeMessage(phoneNumber: string): Promise<SendMessageResult> {
+    // 환경 변수에서 템플릿 ID 가져오기
+    const templateId = process.env.KAKAO_ALIMTALK_TEMPLATE_ID;
+    
+    if (!templateId) {
+      console.error("KAKAO_ALIMTALK_TEMPLATE_ID 환경 변수가 설정되지 않았습니다.");
+      return {
+        success: false,
+        error: "알림톡 템플릿 ID가 설정되지 않았습니다.",
+      };
+    }
 
-수의학 커뮤니티 아이엠벳입니다.
+    // 템플릿 변수 (템플릿에 따라 조정 필요)
+    // 예시: 템플릿에 #{사이트명} 같은 변수가 있다면
+    const templateArgs: Record<string, string> = {
+      // 템플릿에 정의된 변수명과 값
+      // 예: site_name: "아이엠벳"
+    };
 
-가입을 환영드리며, 앞으로 채용·강의 소식 등
-유용한 콘텐츠를 카카오톡으로 가장 빠르게 전달해드릴게요!`;
-
-    return this.sendPlusFriendMessage(
-      receiverUuid,
-      welcomeMessage,
-      process.env.NEXT_PUBLIC_SITE_URL || "https://www.iam-vet.com"
-    );
+    return this.sendAlimTalk(phoneNumber, templateId, templateArgs);
   }
 }
-

@@ -80,6 +80,11 @@ export default function ForumCreatePage() {
         alert("게시글이 성공적으로 등록되었습니다.");
         router.push("/forums");
       } else {
+        // 관리자 인증 필요 안내 (403 에러)
+        if (response.status === 403 && result.requiresAdminVerification) {
+          alert(result.message || "관리자의 인증을 받아야만 서비스를 이용할 수 있습니다. 관리자 인증이 완료될 때까지 기다려주세요.");
+          return;
+        }
         throw new Error(result.message || "게시글 등록에 실패했습니다.");
       }
     } catch (error) {

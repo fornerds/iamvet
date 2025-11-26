@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withAuth } from "@/lib/middleware";
+import { withAdminVerification } from "@/lib/middleware";
 import { createApiResponse, createErrorResponse } from "@/lib/utils";
 import {
   createLectureBookmark,
@@ -14,7 +14,7 @@ interface RouteContext {
   }>;
 }
 
-export const POST = withAuth(
+export const POST = withAdminVerification(
   async (request: NextRequest, context: RouteContext) => {
     try {
       const user = (request as any).user;
@@ -55,7 +55,7 @@ export const POST = withAuth(
   }
 );
 
-export const DELETE = withAuth(
+export const DELETE = withAdminVerification(
   async (request: NextRequest, context: RouteContext) => {
     try {
       const user = (request as any).user;
