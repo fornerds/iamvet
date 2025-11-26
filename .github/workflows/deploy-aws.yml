@@ -134,9 +134,23 @@ jobs:
             echo "=== Running Migrations ==="
             npx prisma migrate deploy || echo "Migration failed, continuing..."
             
+            # 이전 빌드 캐시 완전히 삭제
+            echo "=== Cleaning Previous Build ==="
+            rm -rf .next
+            rm -rf node_modules/.cache
+            echo "✅ 빌드 캐시 삭제 완료"
+            
             # Next.js 빌드
             echo "=== Building Next.js Application ==="
             npm run build
+            
+            # 빌드 결과 확인
+            echo "=== Verifying Build ==="
+            if [ ! -d ".next" ]; then
+              echo "❌ 오류: .next 디렉토리가 생성되지 않았습니다."
+              exit 1
+            fi
+            echo "✅ 빌드 완료 확인"
             
             # ecosystem.config.js 파일 생성 (항상 최신으로 업데이트)
             echo "=== Creating ecosystem.config.js ==="
@@ -196,7 +210,8 @@ jobs:
             echo "=== Restarting PM2 ==="
             if pm2 list | grep -q iamvet; then
               echo "기존 PM2 프로세스 중지 중..."
-              pm2 delete iamvet
+              pm2 stop iamvet || true
+              pm2 delete iamvet || true
               
               # PM2 프로세스가 완전히 중지될 때까지 대기
               echo "PM2 프로세스 중지 대기 중..."
@@ -216,20 +231,21 @@ jobs:
               if [ $WAIT_COUNT -eq $MAX_WAIT ]; then
                 echo "⚠️ 경고: PM2 프로세스가 30초 내에 중지되지 않았습니다. 강제 종료를 시도합니다."
                 pm2 kill 2>/dev/null || true
-                sleep 2
+                sleep 3
                 # PM2 데몬 재시작
                 pm2 resurrect 2>/dev/null || true
+                pm2 save 2>/dev/null || true
               fi
               
               # 추가 안전 대기
-              sleep 2
+              sleep 3
             fi
             
             echo "새 PM2 프로세스 시작 중..."
             pm2 start ecosystem.config.js
             
             # 프로세스 시작 대기
-            sleep 5
+            sleep 10
             
             # PM2 상태 확인
             pm2 status
@@ -238,9 +254,17 @@ jobs:
             # 프로세스가 정상적으로 시작되었는지 확인
             if pm2 list | grep -q "iamvet.*online"; then
               echo "✅ PM2 프로세스가 정상적으로 시작되었습니다."
+              # 추가 확인: 실제로 서버가 응답하는지 테스트
+              sleep 5
+              if curl -f http://localhost:3000 > /dev/null 2>&1; then
+                echo "✅ Next.js 서버가 정상적으로 응답합니다."
+              else
+                echo "⚠️ 경고: PM2는 실행 중이지만 서버가 응답하지 않습니다."
+                pm2 logs iamvet --lines 30 --nostream
+              fi
             else
               echo "❌ 경고: PM2 프로세스가 정상적으로 시작되지 않았습니다."
-              pm2 logs iamvet --lines 20 --nostream
+              pm2 logs iamvet --lines 30 --nostream
               exit 1
             fi
             
