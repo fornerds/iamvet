@@ -19,9 +19,7 @@ export default function DashboardLayout({
   // 경로를 기반으로 사용자 타입 결정
   const userType = pathname.startsWith("/dashboard/hospital")
     ? "hospital"
-    : pathname.startsWith("/dashboard/veterinary-student")
-    ? "veterinary-student"
-    : "veterinarian";
+    : "veterinarian"; // veterinary-student도 veterinarian으로 처리
 
   // 관리자 인증 체크
   useEffect(() => {
