@@ -243,7 +243,7 @@ export const SocialRegistrationForm: React.FC<SocialRegistrationFormProps> = ({
   // 대학교 이메일 검증 (수의학과가 있는 대학교만)
   const validateUniversityEmail = (email: string): boolean => {
     const domain = email.split("@")[1]?.toLowerCase();
-    return VETERINARY_UNIVERSITY_DOMAIN_VALUES.includes(domain || "");
+    return VETERINARY_UNIVERSITY_DOMAIN_VALUES.includes(domain as any);
   };
 
   // 대학교 이메일 조합 및 업데이트
