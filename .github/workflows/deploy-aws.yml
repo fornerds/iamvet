@@ -195,13 +195,54 @@ jobs:
             # PM2 재시작
             echo "=== Restarting PM2 ==="
             if pm2 list | grep -q iamvet; then
+              echo "기존 PM2 프로세스 중지 중..."
               pm2 delete iamvet
+              
+              # PM2 프로세스가 완전히 중지될 때까지 대기
+              echo "PM2 프로세스 중지 대기 중..."
+              MAX_WAIT=30  # 최대 30초 대기
+              WAIT_COUNT=0
+              while [ $WAIT_COUNT -lt $MAX_WAIT ]; do
+                if ! pm2 list | grep -q iamvet; then
+                  echo "✅ PM2 프로세스가 완전히 중지되었습니다."
+                  break
+                fi
+                echo "대기 중... ($WAIT_COUNT/$MAX_WAIT 초)"
+                sleep 1
+                WAIT_COUNT=$((WAIT_COUNT + 1))
+              done
+              
+              # 타임아웃 체크
+              if [ $WAIT_COUNT -eq $MAX_WAIT ]; then
+                echo "⚠️ 경고: PM2 프로세스가 30초 내에 중지되지 않았습니다. 강제 종료를 시도합니다."
+                pm2 kill 2>/dev/null || true
+                sleep 2
+                # PM2 데몬 재시작
+                pm2 resurrect 2>/dev/null || true
+              fi
+              
+              # 추가 안전 대기
+              sleep 2
             fi
+            
+            echo "새 PM2 프로세스 시작 중..."
             pm2 start ecosystem.config.js
+            
+            # 프로세스 시작 대기
+            sleep 5
             
             # PM2 상태 확인
             pm2 status
             pm2 save
+            
+            # 프로세스가 정상적으로 시작되었는지 확인
+            if pm2 list | grep -q "iamvet.*online"; then
+              echo "✅ PM2 프로세스가 정상적으로 시작되었습니다."
+            else
+              echo "❌ 경고: PM2 프로세스가 정상적으로 시작되지 않았습니다."
+              pm2 logs iamvet --lines 20 --nostream
+              exit 1
+            fi
             
             echo "=== Deployment Complete ==="
           ENDSSH
