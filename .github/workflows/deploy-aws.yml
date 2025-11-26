@@ -138,6 +138,11 @@ jobs:
             echo "=== Cleaning Previous Build ==="
             rm -rf .next
             rm -rf node_modules/.cache
+            rm -rf .next/cache
+            rm -rf .swc
+            # PM2가 사용 중인 파일이 있을 수 있으므로 강제 삭제
+            find .next -type f -delete 2>/dev/null || true
+            find .next -type d -delete 2>/dev/null || true
             echo "✅ 빌드 캐시 삭제 완료"
             
             # Next.js 빌드
@@ -242,10 +247,12 @@ jobs:
             fi
             
             echo "새 PM2 프로세스 시작 중..."
+            # PM2 완전히 정리 후 시작
+            pm2 flush || true
             pm2 start ecosystem.config.js
             
             # 프로세스 시작 대기
-            sleep 10
+            sleep 15
             
             # PM2 상태 확인
             pm2 status
