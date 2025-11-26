@@ -595,11 +595,6 @@ export default function UsersManagement() {
                 <TableCell
                   sx={{ color: "#4f5866", fontWeight: "600", fontSize: "14px" }}
                 >
-                  인증
-                </TableCell>
-                <TableCell
-                  sx={{ color: "#4f5866", fontWeight: "600", fontSize: "14px" }}
-                >
                   작업
                 </TableCell>
               </TableRow>
@@ -688,13 +683,6 @@ export default function UsersManagement() {
                   </TableCell>
                   <TableCell sx={{ color: "#9098a4", fontSize: "13px" }}>
                     {user.lastLogin || "없음"}
-                  </TableCell>
-                  <TableCell>
-                    {user.verified ? (
-                      <CheckCircle sx={{ color: "#698cfc" }} />
-                    ) : (
-                      <Warning sx={{ color: "#ffb7b8" }} />
-                    )}
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
@@ -1033,44 +1021,6 @@ export default function UsersManagement() {
                     <Typography variant="body2" sx={{ color: "#4f5866" }}>
                       {detailUser.lastLogin || "없음"}
                     </Typography>
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: "#9098a4",
-                        fontSize: "12px",
-                        fontWeight: "600",
-                      }}
-                    >
-                      인증 상태
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mt: 0.5,
-                      }}
-                    >
-                      {detailUser.verified ? (
-                        <>
-                          <CheckCircle
-                            sx={{ color: "#698cfc", fontSize: 16 }}
-                          />
-                          <Typography variant="body2" sx={{ color: "#698cfc" }}>
-                            인증됨
-                          </Typography>
-                        </>
-                      ) : (
-                        <>
-                          <Warning sx={{ color: "#ffb7b8", fontSize: 16 }} />
-                          <Typography variant="body2" sx={{ color: "#ffb7b8" }}>
-                            미인증
-                          </Typography>
-                        </>
-                      )}
-                    </Box>
                   </Box>
                 </Box>
               </Box>
