@@ -5,6 +5,7 @@ interface Advertisement {
   title: string;
   description?: string;
   imageUrl: string;
+  mobileImageUrl?: string;
   linkUrl: string;
   position: 'HERO' | 'BANNER' | 'SIDEBAR' | 'CARD' | 'DASHBOARD';
   isActive: boolean;
