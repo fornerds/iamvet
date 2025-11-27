@@ -711,6 +711,7 @@ model advertisements {
   description    String
   type           AdvertisementType
   imageUrl       String?
+  mobileImageUrl String?
   linkUrl        String?
   isActive       Boolean                     @default(true)
   startDate      DateTime

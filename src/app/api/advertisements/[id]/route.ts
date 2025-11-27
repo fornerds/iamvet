@@ -87,6 +87,7 @@ export async function PUT(
       description,
       type,
       imageUrl,
+      mobileImageUrl,
       linkUrl,
       startDate,
       endDate,
@@ -105,6 +106,15 @@ export async function PUT(
       }
     }
 
+    // 모바일 이미지가 변경된 경우 기존 S3 이미지 삭제
+    if (mobileImageUrl !== advertisement.mobileImageUrl && advertisement.mobileImageUrl && isS3Url(advertisement.mobileImageUrl)) {
+      try {
+        await deleteImage(advertisement.mobileImageUrl);
+      } catch (error) {
+        console.error("Failed to delete old mobile image:", error);
+      }
+    }
+
     const updatedAdvertisement = await (prisma as any).advertisements.update({
       where: { id: id },
       data: {
@@ -112,6 +122,7 @@ export async function PUT(
         ...(description !== undefined && { description }),
         ...(type !== undefined && { type }),
         ...(imageUrl !== undefined && { imageUrl }),
+        ...(mobileImageUrl !== undefined && { mobileImageUrl }),
         ...(linkUrl !== undefined && { linkUrl }),
         ...(isActive !== undefined && { isActive }),
         ...(startDate !== undefined && { startDate: new Date(startDate) }),
@@ -179,6 +190,15 @@ export async function DELETE(
         await deleteImage(advertisement.imageUrl);
       } catch (error) {
         console.error("Failed to delete image:", error);
+      }
+    }
+
+    // S3 모바일 이미지 삭제
+    if (advertisement.mobileImageUrl && isS3Url(advertisement.mobileImageUrl)) {
+      try {
+        await deleteImage(advertisement.mobileImageUrl);
+      } catch (error) {
+        console.error("Failed to delete mobile image:", error);
       }
     }
 

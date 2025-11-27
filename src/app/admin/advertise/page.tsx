@@ -62,6 +62,7 @@ interface Advertisement {
     | "AD_CARD"
     | "DASHBOARD_BANNER";
   imageUrl?: string;
+  mobileImageUrl?: string;
   linkUrl?: string;
   isActive: boolean;
   startDate: string;
@@ -79,7 +80,9 @@ interface Advertisement {
 export default function AdvertiseManagement() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mobileFileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isMobileUploading, setIsMobileUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
 
@@ -198,6 +201,7 @@ export default function AdvertiseManagement() {
             description: latestAd.description,
             type: latestAd.type,
             imageUrl: latestAd.imageUrl,
+            mobileImageUrl: latestAd.mobileImageUrl,
             linkUrl: latestAd.linkUrl,
             isActive: latestAd.isActive,
             startDate: latestAd.startDate
@@ -280,6 +284,7 @@ export default function AdvertiseManagement() {
             description: formData.description,
             type: formData.type,
             imageUrl: formData.imageUrl,
+            mobileImageUrl: formData.mobileImageUrl,
             linkUrl: formData.linkUrl,
             isActive: formData.isActive,
             startDate: formData.startDate,
@@ -311,6 +316,7 @@ export default function AdvertiseManagement() {
             description: formData.description,
             type: formData.type,
             imageUrl: formData.imageUrl,
+            mobileImageUrl: formData.mobileImageUrl,
             linkUrl: formData.linkUrl,
             isActive: formData.isActive,
             startDate: formData.startDate,
@@ -1339,6 +1345,178 @@ export default function AdvertiseManagement() {
                   )}
                 </Box>
               </Box>
+
+              {/* 모바일 이미지 업로드 (일반 배너만) */}
+              {formData.type === "GENERAL_BANNER" && (
+                <Box>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ color: "var(--Text)", mb: 1, fontWeight: 600 }}
+                  >
+                    모바일 이미지 (선택사항)
+                  </Typography>
+                  <Box
+                    sx={{
+                      border: "2px dashed var(--Line)",
+                      borderRadius: 2,
+                      p: 3,
+                      textAlign: "center",
+                      cursor: "pointer",
+                      backgroundColor: "var(--Box)",
+                      "&:hover": {
+                        borderColor: "var(--Keycolor1)",
+                        backgroundColor: "var(--Box-light)",
+                      },
+                    }}
+                    onClick={() =>
+                      !isMobileUploading &&
+                      document.getElementById("mobile-image-upload-input")?.click()
+                    }
+                  >
+                    <input
+                      ref={mobileFileInputRef}
+                      id="mobile-image-upload-input"
+                      type="file"
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          // 파일 크기 제한 (10MB)
+                          if (file.size > 10 * 1024 * 1024) {
+                            alert("파일 크기는 10MB 이하로 선택해주세요.");
+                            return;
+                          }
+
+                          // 파일 타입 제한
+                          if (!file.type.startsWith("image/")) {
+                            alert("이미지 파일만 선택 가능합니다.");
+                            return;
+                          }
+
+                          setIsMobileUploading(true);
+
+                          try {
+                            // 기존 S3 이미지가 있다면 먼저 삭제
+                            if (formData.mobileImageUrl && isS3Url(formData.mobileImageUrl)) {
+                              await deleteImage(formData.mobileImageUrl);
+                            }
+
+                            // S3에 업로드
+                            const result = await uploadImage(
+                              file,
+                              "advertisements"
+                            );
+
+                            if (result.success && result.url) {
+                              setFormData((prev) => ({
+                                ...prev,
+                                mobileImageUrl: result.url,
+                              }));
+                            } else {
+                              alert(
+                                result.error || "이미지 업로드에 실패했습니다."
+                              );
+                            }
+                          } catch (error) {
+                            console.error("Upload error:", error);
+                            const errorMessage =
+                              error instanceof Error
+                                ? error.message
+                                : "이미지 업로드 중 오류가 발생했습니다.";
+                            alert(`업로드 오류: ${errorMessage}`);
+                          } finally {
+                            setIsMobileUploading(false);
+                          }
+                        }
+                      }}
+                    />
+                    {formData.mobileImageUrl ? (
+                      <Box>
+                        <Box
+                          component="img"
+                          src={formData.mobileImageUrl}
+                          sx={{
+                            maxWidth: "100%",
+                            maxHeight: 200,
+                            objectFit: "contain",
+                            mb: 2,
+                            borderRadius: 1,
+                          }}
+                        />
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+
+                            try {
+                              // S3에서 이미지 삭제
+                              if (
+                                formData.mobileImageUrl &&
+                                isS3Url(formData.mobileImageUrl)
+                              ) {
+                                await deleteImage(formData.mobileImageUrl);
+                              }
+
+                              setFormData((prev) => ({
+                                ...prev,
+                                mobileImageUrl: undefined,
+                              }));
+                              if (mobileFileInputRef.current) {
+                                mobileFileInputRef.current.value = "";
+                              }
+                            } catch (error) {
+                              console.error("Delete error:", error);
+                              const errorMessage =
+                                error instanceof Error
+                                  ? error.message
+                                  : "이미지 삭제 중 오류가 발생했습니다.";
+                              alert(`삭제 오류: ${errorMessage}`);
+                            }
+                          }}
+                          sx={{
+                            borderColor: "var(--Line)",
+                            color: "var(--Subtext)",
+                          }}
+                        >
+                          이미지 제거
+                        </Button>
+                      </Box>
+                    ) : (
+                      <Box>
+                        <Upload
+                          sx={{ fontSize: 48, color: "var(--Guidetext)", mb: 1 }}
+                        />
+                        <Typography
+                          variant="body1"
+                          sx={{ color: "var(--Text)", mb: 0.5 }}
+                        >
+                          {isMobileUploading
+                            ? "업로드 중..."
+                            : "클릭하여 모바일 이미지 업로드"}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{ color: "var(--Guidetext)" }}
+                        >
+                          JPG, PNG, GIF (최대 10MB)
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "var(--Keycolor1)",
+                            display: "block",
+                            mt: 1,
+                          }}
+                        >
+                          권장 크기: 580 × 380 픽셀
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </Box>
+              )}
 
               <TextField
                 fullWidth

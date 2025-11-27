@@ -3,9 +3,30 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 
+// 반응형 이미지 선택 훅
+const useResponsiveImage = (desktopUrl: string, mobileUrl?: string) => {
+  const [imageUrl, setImageUrl] = useState(desktopUrl);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth <= 1350;
+      setIsMobile(mobile);
+      setImageUrl(mobile && mobileUrl ? mobileUrl : desktopUrl);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, [desktopUrl, mobileUrl]);
+
+  return { imageUrl, isMobile };
+};
+
 interface Advertisement {
   id: string;
   imageUrl: string;
+  mobileImageUrl?: string;
   linkUrl?: string;
 }
 
@@ -57,6 +78,10 @@ const AdvertisementSlider: React.FC<AdvertisementSliderProps> = ({
   }
 
   const currentAd = advertisements[currentIndex];
+  const { imageUrl, isMobile } = useResponsiveImage(
+    currentAd.imageUrl,
+    currentAd.mobileImageUrl
+  );
 
   const handleAdClick = () => {
     if (currentAd.linkUrl) {
@@ -70,18 +95,24 @@ const AdvertisementSlider: React.FC<AdvertisementSliderProps> = ({
     >
       {/* 이미지 컨테이너 */}
       <div
-        className="relative w-full h-full cursor-pointer group"
+        className={`relative w-full h-full cursor-pointer group ${
+          isMobile && currentAd.mobileImageUrl ? "bg-gray-200" : ""
+        }`}
         onClick={handleAdClick}
       >
         {/* 이미지 */}
         <Image
-          src={currentAd.imageUrl}
+          src={imageUrl}
           alt={`Advertisement ${currentIndex + 1}`}
           fill
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          className={`transition-transform duration-500 group-hover:scale-105 ${
+            isMobile && currentAd.mobileImageUrl
+              ? "object-contain"
+              : "object-cover"
+          }`}
           quality={100}
           priority={currentIndex === 0}
-          sizes="(max-width: 768px) 100vw, 100vw"
+          sizes="(max-width: 1350px) 100vw, 100vw"
         />
 
         {/* 페이지 인디케이터 */}

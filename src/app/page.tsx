@@ -659,6 +659,7 @@ export default function HomePage() {
       .map((ad) => ({
         id: ad.id,
         imageUrl: ad.imageUrl,
+        mobileImageUrl: ad.mobileImageUrl,
         linkUrl: ad.linkUrl,
       }));
   }, [bannerAdsData]);
