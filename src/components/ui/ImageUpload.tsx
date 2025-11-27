@@ -200,7 +200,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         >
           <ImageIcon sx={{ fontSize: 48, color: '#bdbdbd', mb: 1 }} />
           <Typography variant="body2" color="text.secondary">
-            이미지를 추가하여 공지사항을 더욱 효과적으로 전달하세요
+            추천 이미지 사이즈: 세로가 더 긴 사이즈의 이미지
           </Typography>
         </Box>
       )}
