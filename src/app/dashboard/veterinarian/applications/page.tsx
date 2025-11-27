@@ -10,6 +10,8 @@ import { Pagination } from "@/components/ui/Pagination/Pagination";
 import { useVeterinarianApplications } from "@/hooks/api/useVeterinarianApplications";
 import profileImg from "@/assets/images/profile.png";
 import { ApplicationStatus, APPLICATION_STATUS_LABELS, APPLICATION_STATUS_COLORS } from "@/constants/applicationStatus";
+import JobClosedModal from "@/components/ui/JobClosedModal";
+import { checkJobStatusById } from "@/utils/jobStatus";
 
 interface ApplicationData {
   id: number;
@@ -22,9 +24,18 @@ interface ApplicationData {
   hospitalLogo?: string;
 }
 
-const MobileApplicationCard: React.FC<{ application: ApplicationData }> = ({
+const MobileApplicationCard: React.FC<{ 
+  application: ApplicationData;
+  onJobClick: (jobId: string) => void;
+}> = ({
   application,
+  onJobClick,
 }) => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onJobClick(application.jobId);
+  };
+
   return (
     <div className="bg-white border border-[#EFEFF0] rounded-[12px] p-4 mb-3">
       <div className="flex items-start justify-between mb-3">
@@ -40,9 +51,9 @@ const MobileApplicationCard: React.FC<{ application: ApplicationData }> = ({
             {application.hospitalName}
           </span>
         </div>
-        <Link href={`/jobs/${application.jobId}`}>
+        <button onClick={handleClick} className="cursor-pointer">
           <ArrowRightIcon currentColor="currentColor" size="20" />
-        </Link>
+        </button>
       </div>
 
       <div className="flex flex-col gap-[4px]">
@@ -86,6 +97,7 @@ export default function VeterinarianApplicationsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("latest");
   const itemsPerPage = 10;
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // API를 통해 지원내역 데이터 가져오기
   const { data: applicationsData, isLoading, error } = useVeterinarianApplications(sortBy);
@@ -111,6 +123,16 @@ export default function VeterinarianApplicationsPage() {
     startIndex,
     startIndex + itemsPerPage
   );
+
+  // 채용공고 클릭 핸들러
+  const handleJobClick = async (jobId: string) => {
+    const status = await checkJobStatusById(jobId);
+    if (status?.isClosed) {
+      setIsModalOpen(true);
+    } else {
+      window.location.href = `/jobs/${jobId}`;
+    }
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -164,6 +186,7 @@ export default function VeterinarianApplicationsPage() {
                 <MobileApplicationCard
                   key={application.id}
                   application={application}
+                  onJobClick={handleJobClick}
                 />
               ))}
             </div>
@@ -210,12 +233,12 @@ export default function VeterinarianApplicationsPage() {
                       </Tag>
                     </td>
                     <td className="py-[22px] pr-[30px]">
-                      <Link
-                        href={`/jobs/${application.jobId}`}
-                        className="text-key1 text-[16px] font-bold no-underline hover:underline hover:underline-offset-[3px]"
+                      <button
+                        onClick={() => handleJobClick(application.jobId)}
+                        className="text-key1 text-[16px] font-bold no-underline hover:underline hover:underline-offset-[3px] cursor-pointer"
                       >
                         상세보기
-                      </Link>
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -236,6 +259,12 @@ export default function VeterinarianApplicationsPage() {
           )}
         </div>
       </div>
+
+      {/* 마감/삭제된 공고 모달 */}
+      <JobClosedModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Tag } from "./Tag";
@@ -8,6 +8,8 @@ import { ArrowRightIcon } from "public/icons";
 import profileImg from "@/assets/images/profile.png";
 import { useApplications } from "@/hooks/useApplications";
 import { ApplicationStatus, APPLICATION_STATUS_LABELS, APPLICATION_STATUS_COLORS } from "@/constants/applicationStatus";
+import JobClosedModal from "@/components/ui/JobClosedModal";
+import { checkJobStatusById } from "@/utils/jobStatus";
 
 interface ApplicationData {
   id: number;
@@ -25,9 +27,18 @@ interface RecentApplicationsCardProps {
   applications?: ApplicationData[];
 }
 
-const MobileApplicationCard: React.FC<{ application: ApplicationData }> = ({
+const MobileApplicationCard: React.FC<{ 
+  application: ApplicationData;
+  onJobClick: (jobId: string) => void;
+}> = ({
   application,
+  onJobClick,
 }) => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onJobClick(application.jobId);
+  };
+
   return (
     <div className="bg-white border border-[#EFEFF0] rounded-[12px] p-4 mb-3">
       <div className="flex items-start justify-between mb-3">
@@ -43,9 +54,9 @@ const MobileApplicationCard: React.FC<{ application: ApplicationData }> = ({
             {application.applicant}
           </span>
         </div>
-        <Link href={`/jobs/${application.jobId}`}>
+        <button onClick={handleClick} className="cursor-pointer">
           <ArrowRightIcon size="20" />
-        </Link>
+        </button>
       </div>
 
       <div className="flex flex-col gap-[4px]">
@@ -81,6 +92,17 @@ const MobileApplicationCard: React.FC<{ application: ApplicationData }> = ({
 
 const RecentApplicationsCard: React.FC<RecentApplicationsCardProps> = () => {
   const { applications, loading, error } = useApplications(3);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 채용공고 클릭 핸들러
+  const handleJobClick = async (jobId: string) => {
+    const status = await checkJobStatusById(jobId);
+    if (status?.isClosed) {
+      setIsModalOpen(true);
+    } else {
+      window.location.href = `/jobs/${jobId}`;
+    }
+  };
 
   if (loading) {
     return (
@@ -138,6 +160,7 @@ const RecentApplicationsCard: React.FC<RecentApplicationsCardProps> = () => {
           <MobileApplicationCard
             key={application.id}
             application={application}
+            onJobClick={handleJobClick}
           />
         ))}
       </div>
@@ -188,18 +211,24 @@ const RecentApplicationsCard: React.FC<RecentApplicationsCardProps> = () => {
                   </Tag>
                 </td>
                 <td className="py-[22px] pr-[30px]">
-                  <Link
-                    href={`/jobs/${application.jobId}`}
-                    className="text-key1 text-[16px] font-bold no-underline hover:underline hover:underline-offset-[3px]"
+                  <button
+                    onClick={() => handleJobClick(application.jobId)}
+                    className="text-key1 text-[16px] font-bold no-underline hover:underline hover:underline-offset-[3px] cursor-pointer"
                   >
                     상세보기
-                  </Link>
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* 마감/삭제된 공고 모달 */}
+      <JobClosedModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 };

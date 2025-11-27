@@ -1,9 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import JobInfoCard from "./JobInfoCard";
 import { convertDDayToNumber } from "@/utils/dDayConverter";
+import JobClosedModal from "@/components/ui/JobClosedModal";
+import { checkJobStatusById } from "@/utils/jobStatus";
 
 interface JobData {
   id: string;
@@ -24,6 +26,7 @@ const BookmarkedJobsCard: React.FC<BookmarkedJobsCardProps> = ({ jobs }) => {
   const [data, setData] = React.useState<JobData[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   React.useEffect(() => {
     if (jobs) {
@@ -89,6 +92,17 @@ const BookmarkedJobsCard: React.FC<BookmarkedJobsCardProps> = ({ jobs }) => {
       alert(error instanceof Error ? error.message : "북마크 처리 중 오류가 발생했습니다.");
     }
   };
+
+  // 채용공고 클릭 핸들러
+  const handleJobClick = async (jobId: string | number) => {
+    const status = await checkJobStatusById(String(jobId));
+    if (status?.isClosed) {
+      setIsModalOpen(true);
+    } else {
+      window.location.href = `/jobs/${jobId}`;
+    }
+  };
+
   return (
     <div className="bg-white w-full lg:max-w-[714px] mx-auto rounded-[16px] border border-[#EFEFF0] p-[16px] lg:p-[20px]">
       <div className="flex items-center justify-between mb-6">
@@ -159,13 +173,17 @@ const BookmarkedJobsCard: React.FC<BookmarkedJobsCardProps> = ({ jobs }) => {
               variant="wide"
               showDeadline={job.dDay !== "신규"}
               onBookmark={handleBookmarkToggle}
-              onClick={() => {
-                window.location.href = `/jobs/${job.id}`;
-              }}
+              onClick={() => handleJobClick(job.id)}
             />
           ))}
         </div>
       )}
+
+      {/* 마감/삭제된 공고 모달 */}
+      <JobClosedModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 };
