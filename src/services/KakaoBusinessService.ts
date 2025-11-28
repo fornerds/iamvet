@@ -124,12 +124,17 @@ export class KakaoBusinessService {
 
       // 알림톡 발송 API 호출
       // 참고: https://developers.kakao.com/docs/latest/ko/kakaotalk-rest-api/alimtalk
-      const requestBody: AlimTalkTemplateRequest = {
+      // 카카오 알림톡은 템플릿 ID와 전화번호를 사용하여 발송
+      
+      // 요청 본문 구성
+      const requestBody: any = {
+        receiver_phone_number: cleanPhoneNumber,
         template_id: templateId,
       };
 
+      // 템플릿 변수가 있는 경우 추가
       if (templateArgs && Object.keys(templateArgs).length > 0) {
-        requestBody.template_args = templateArgs;
+        requestBody.template_args = JSON.stringify(templateArgs);
       }
 
       const response = await fetch(
@@ -138,15 +143,14 @@ export class KakaoBusinessService {
           method: "POST",
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
           },
-          body: new URLSearchParams({
-            receiver_phone_number: cleanPhoneNumber,
-            template_id: templateId,
-            ...(templateArgs && Object.keys(templateArgs).length > 0
-              ? { template_args: JSON.stringify(templateArgs) }
-              : {}),
-          }),
+          body: new URLSearchParams(
+            Object.entries(requestBody).reduce((acc, [key, value]) => {
+              acc[key] = String(value);
+              return acc;
+            }, {} as Record<string, string>)
+          ),
         }
       );
 

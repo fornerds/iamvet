@@ -61,6 +61,8 @@ jobs:
           SMTP_FROM: ${{ secrets.SMTP_FROM }}
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
+          USE_KAKAO_BUSINESS_API: ${{ secrets.USE_KAKAO_BUSINESS_API }}
+          KAKAO_ALIMTALK_TEMPLATE_ID: ${{ secrets.KAKAO_ALIMTALK_TEMPLATE_ID }}
           NODE_ENV: production
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} << ENDSSH
@@ -120,6 +122,8 @@ jobs:
             SMTP_FROM="$SMTP_FROM"
             EMAIL_USER="$EMAIL_USER"
             EMAIL_APP_PASSWORD="$EMAIL_APP_PASSWORD"
+            USE_KAKAO_BUSINESS_API="$USE_KAKAO_BUSINESS_API"
+            KAKAO_ALIMTALK_TEMPLATE_ID="$KAKAO_ALIMTALK_TEMPLATE_ID"
             ENVEOF
             
             # 의존성 설치

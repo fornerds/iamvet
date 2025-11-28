@@ -38,6 +38,10 @@ GitHub Actions 자동 배포를 위해 필요한 모든 Secrets 목록입니다.
 - [ ] `KAKAO_CLIENT_ID`
 - [ ] `KAKAO_CLIENT_SECRET`
 - [ ] `KAKAO_REDIRECT_URI`
+
+### 카카오 알림톡 설정
+- [ ] `USE_KAKAO_BUSINESS_API` - 카카오 비즈니스 API 활성화 (값: "true")
+- [ ] `KAKAO_ALIMTALK_TEMPLATE_ID` - 알림톡 템플릿 ID (값: "126382")
 - [ ] `GOOGLE_CLIENT_ID`
 - [ ] `GOOGLE_CLIENT_SECRET`
 - [ ] `GOOGLE_REDIRECT_URI`
