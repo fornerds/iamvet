@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeftIcon } from "public/icons";
 import axios from "axios";
+import { useAuth } from "@/hooks/api/useAuth";
 
 interface AnnouncementDetail {
   id: string;
@@ -28,15 +29,19 @@ interface AnnouncementDetail {
 export default function NoticeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [announcement, setAnnouncement] = useState<AnnouncementDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (id) {
       fetchAnnouncementDetail();
-      markAsRead(); // 읽음 처리
+      // 로그인한 사용자만 읽음 처리
+      if (isAuthenticated) {
+        markAsRead();
+      }
     }
-  }, [id]);
+  }, [id, isAuthenticated]);
 
   const fetchAnnouncementDetail = async () => {
     try {
@@ -70,10 +75,16 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
   };
 
   const markAsRead = async () => {
+    // 로그인한 사용자만 읽음 처리
+    if (!isAuthenticated) {
+      return;
+    }
+
     try {
       await axios.patch(`/api/notices/${id}/read`);
     } catch (error) {
-      console.error("Failed to mark as read:", error);
+      // 읽음 처리 실패는 조용히 무시 (콘솔 에러 표시 안 함)
+      // console.error("Failed to mark as read:", error);
     }
   };
 

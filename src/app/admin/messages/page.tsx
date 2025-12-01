@@ -72,7 +72,6 @@ export default function AnnouncementManagement() {
     content: "",
     images: [] as string[],
     priority: "NORMAL" as AnnouncementData["priority"],
-    targetUsers: "ALL" as string,
   });
 
   const itemsPerPage = 10;
@@ -168,9 +167,6 @@ export default function AnnouncementManagement() {
         content: item.content,
         images: item.images || [],
         priority: item.priority,
-        targetUsers: item.targetUsers.includes("ALL") ? "ALL" : 
-                    item.targetUsers.includes("VETERINARIAN") ? "VETERINARIAN" :
-                    item.targetUsers.includes("HOSPITAL") ? "HOSPITAL" : "VETERINARY_STUDENT",
       });
     }
     
@@ -185,7 +181,6 @@ export default function AnnouncementManagement() {
       content: "",
       images: [],
       priority: "NORMAL",
-      targetUsers: "ALL",
     });
     setModalVisible(true);
   };
@@ -194,12 +189,11 @@ export default function AnnouncementManagement() {
     try {
       setLoading(true);
       
-      const targetUsersArray = announcementData.targetUsers === "ALL" 
-        ? ["ALL"] 
-        : [announcementData.targetUsers];
+      // 항상 전체 사용자에게 발송
+      const targetUsersArray = ["ALL"];
 
       if (actionType === "compose") {
-        // 새 공지사항 생성
+        // 새 공지사항 생성 (임시저장, 발송은 별도 버튼으로)
         const token = getAdminToken();
         const response = await axios.post("/api/admin/announcements", {
           title: announcementData.title,
@@ -215,10 +209,11 @@ export default function AnnouncementManagement() {
         });
         
         if (response.data.success) {
+          alert("공지사항이 임시저장되었습니다. 발송 버튼을 눌러 발송하세요.");
           await fetchAnnouncements();
         }
       } else if (actionType === "edit" && selectedItem) {
-        // 공지사항 수정
+        // 공지사항 수정 (임시저장, 발송은 별도 버튼으로)
         const token = getAdminToken();
         const response = await axios.put(`/api/admin/announcements/${selectedItem.id}`, {
           title: announcementData.title,
@@ -234,6 +229,7 @@ export default function AnnouncementManagement() {
         });
         
         if (response.data.success) {
+          alert("공지사항이 수정되었습니다. 발송 버튼을 눌러 발송하세요.");
           await fetchAnnouncements();
         }
       }
@@ -245,10 +241,10 @@ export default function AnnouncementManagement() {
         content: "",
         images: [],
         priority: "NORMAL",
-        targetUsers: "ALL",
       });
     } catch (error) {
       console.error("Failed to save announcement:", error);
+      alert("공지사항 저장에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -541,9 +537,6 @@ export default function AnnouncementManagement() {
                     대상/우선순위
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600, color: "var(--Subtext)", fontSize: "0.875rem" }}>
-                    발송현황
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: "var(--Subtext)", fontSize: "0.875rem" }}>
                     상태
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600, color: "var(--Subtext)", fontSize: "0.875rem" }}>
@@ -617,17 +610,6 @@ export default function AnnouncementManagement() {
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Typography
-                        variant="body2"
-                        sx={{ color: "#3b394d", fontWeight: 500 }}
-                      >
-                        {item.status === "SENT" 
-                          ? `발송: ${item.sendCount}명 / 읽음: ${item.readCount}명`
-                          : `대상: ${item.totalRecipients || 0}명`
-                        }
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
                       <Tag variant={getStatusVariant(item.status)}>
                         {getStatusText(item.status)}
                       </Tag>
@@ -653,7 +635,7 @@ export default function AnnouncementManagement() {
                 ))}
                 {displayItems.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} sx={{ textAlign: "center", py: 8 }}>
+                    <TableCell colSpan={5} sx={{ textAlign: "center", py: 8 }}>
                       <Typography variant="body1" sx={{ color: "var(--Subtext2)" }}>
                         {loading ? "로딩 중..." : "검색 조건에 맞는 공지사항이 없습니다."}
                       </Typography>
@@ -748,33 +730,21 @@ export default function AnnouncementManagement() {
                 onChange={(images) => setAnnouncementData(prev => ({ ...prev, images }))}
                 maxImages={5}
               />
-              <Box sx={{ display: "flex", gap: 2 }}>
-                <FormControl sx={{ flex: 1 }}>
-                  <InputLabel>우선순위</InputLabel>
-                  <Select
-                    value={announcementData.priority}
-                    label="우선순위"
-                    onChange={(e) => setAnnouncementData(prev => ({ ...prev, priority: e.target.value as AnnouncementData["priority"] }))}
-                  >
-                    <MenuItem value="HIGH">높음</MenuItem>
-                    <MenuItem value="NORMAL">보통</MenuItem>
-                    <MenuItem value="LOW">낮음</MenuItem>
-                  </Select>
-                </FormControl>
-                <FormControl sx={{ flex: 1 }}>
-                  <InputLabel>대상 사용자</InputLabel>
-                  <Select
-                    value={announcementData.targetUsers}
-                    label="대상 사용자"
-                    onChange={(e) => setAnnouncementData(prev => ({ ...prev, targetUsers: e.target.value }))}
-                  >
-                    <MenuItem value="ALL">전체 사용자</MenuItem>
-                    <MenuItem value="VETERINARIAN">수의사</MenuItem>
-                    <MenuItem value="HOSPITAL">병원</MenuItem>
-                    <MenuItem value="VETERINARY_STUDENT">수의학과 학생</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
+              <FormControl fullWidth>
+                <InputLabel>우선순위</InputLabel>
+                <Select
+                  value={announcementData.priority}
+                  label="우선순위"
+                  onChange={(e) => setAnnouncementData(prev => ({ ...prev, priority: e.target.value as AnnouncementData["priority"] }))}
+                >
+                  <MenuItem value="HIGH">높음</MenuItem>
+                  <MenuItem value="NORMAL">보통</MenuItem>
+                  <MenuItem value="LOW">낮음</MenuItem>
+                </Select>
+              </FormControl>
+              <Typography variant="body2" sx={{ color: "var(--Subtext)", mt: 1 }}>
+                * 공지사항은 저장 후 발송 버튼을 눌러야 전체 사용자에게 발송됩니다.
+              </Typography>
             </Stack>
           ) : actionType === "view" && selectedItem ? (
             <Stack spacing={2} sx={{ mt: 2 }}>
@@ -833,11 +803,6 @@ export default function AnnouncementManagement() {
                 <Typography variant="body2" sx={{ color: "#3b394d", mb: 0.5 }}>
                   작성자: {selectedItem.author}
                 </Typography>
-                {selectedItem.status === "SENT" && (
-                  <Typography variant="body2" sx={{ color: "#3b394d" }}>
-                    발송: {selectedItem.sendCount}명 / 읽음: {selectedItem.readCount}명
-                  </Typography>
-                )}
               </Box>
             </Stack>
           ) : (
@@ -875,8 +840,8 @@ export default function AnnouncementManagement() {
               }}
             >
               {loading ? "처리중..." :
-               actionType === "compose" ? "저장" :
-               actionType === "edit" ? "수정 완료" : "삭제"}
+               actionType === "compose" ? "임시저장" :
+               actionType === "edit" ? "수정 저장" : "삭제"}
             </Button>
           )}
         </DialogActions>

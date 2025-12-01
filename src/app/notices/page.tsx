@@ -80,10 +80,8 @@ export default function NoticesPage() {
       }
     } catch (error: any) {
       console.error("Failed to fetch announcements:", error);
-      if (error.response?.status === 401) {
-        // 인증 실패 시 로그인 페이지로 리다이렉트
-        window.location.href = "/member-select";
-      }
+      // 비회원도 접근 가능하므로 에러가 발생해도 빈 배열로 설정
+      setAnnouncements([]);
     } finally {
       setIsLoading(false);
     }
@@ -311,7 +309,7 @@ export default function NoticesPage() {
                   title={announcement.title}
                   content={announcement.content}
                   createdAt={formatDate(announcement.createdAt)}
-                  isRead={announcement.isRead}
+                  isRead={true}
                   onMarkAsRead={handleMarkAsRead}
                   basePath="/notices"
                   images={announcement.announcements?.images || []}

@@ -95,25 +95,93 @@ export async function DELETE(
 
     // 트랜잭션으로 관련 데이터 함께 삭제
     await prisma.$transaction(async (tx) => {
-      // 1. notification_batches 먼저 삭제
-      await tx.notification_batches.deleteMany({
-        where: { announcementId },
-      });
+      try {
+        // 1. 공지사항 정보 조회 (notification title 확인용)
+        const announcement = await tx.announcements.findUnique({
+          where: { id: announcementId },
+          include: { 
+            notifications: true,
+            notification_batches: true,
+          },
+        });
 
-      // 2. announcements 삭제 (notifications는 cascade로 자동 삭제됨)
-      await tx.announcements.delete({
-        where: { id: announcementId },
-      });
+        if (!announcement) {
+          throw new Error("공지사항을 찾을 수 없습니다.");
+        }
+
+        console.log("Deleting announcement:", {
+          id: announcementId,
+          hasNotifications: !!announcement.notifications,
+          hasBatches: announcement.notification_batches?.length || 0,
+        });
+
+        // 2. notification_batches 먼저 삭제 (announcements를 참조하므로)
+        if (announcement.notification_batches && announcement.notification_batches.length > 0) {
+          console.log("Deleting notification_batches:", announcement.notification_batches.length);
+          await tx.notification_batches.deleteMany({
+            where: { announcementId },
+          });
+        }
+
+        // 3. announcements 삭제
+        // (notifications는 cascade로 자동 삭제됨)
+        // 단, announcements의 notificationId를 참조하는 notification을 먼저 삭제해야 함
+        console.log("Deleting announcement:", announcementId);
+        
+        // announcements를 삭제하면 notifications도 cascade로 삭제되지만,
+        // 개별로 발송된 notification들은 별도로 삭제해야 함
+        if (announcement.notifications) {
+          const notificationTitle = announcement.notifications.title;
+          const senderId = announcement.createdBy;
+          const notificationId = announcement.notificationId;
+
+          console.log("Deleting notifications:", { title: notificationTitle, senderId, notificationId });
+
+          // 1) announcements의 notificationId를 참조하는 notification 삭제 (cascade로 announcements도 삭제됨)
+          // 하지만 이렇게 하면 announcements가 먼저 삭제되어서 문제가 될 수 있음
+          // 따라서 개별 notification만 먼저 삭제하고, announcements의 notification은 나중에 삭제
+          
+          // 같은 제목과 발신자로 생성된 모든 notification 삭제 (announcements의 notificationId 제외)
+          const deletedCount = await tx.notifications.deleteMany({
+            where: {
+              type: NotificationType.ANNOUNCEMENT,
+              senderId: senderId,
+              title: notificationTitle,
+              id: {
+                not: notificationId, // announcements의 notificationId는 제외
+              },
+            },
+          });
+
+          console.log("Deleted notifications count:", deletedCount.count);
+
+          // 2) announcements의 notification 삭제 (이것이 cascade로 announcements도 삭제함)
+          await tx.notifications.delete({
+            where: { id: notificationId },
+          });
+        } else {
+          // notification이 없는 경우 (드래프트 상태일 수 있음)
+          await tx.announcements.delete({
+            where: { id: announcementId },
+          });
+        }
+
+        console.log("Announcement deleted successfully");
+      } catch (txError: any) {
+        console.error("Transaction error:", txError);
+        throw txError;
+      }
     });
 
     return NextResponse.json({
       success: true,
       message: "공지사항이 삭제되었습니다.",
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to delete announcement:", error);
+    const errorMessage = error?.message || "공지사항 삭제에 실패했습니다.";
     return NextResponse.json(
-      { success: false, error: "Failed to delete announcement" },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }
@@ -159,19 +227,13 @@ export async function POST(
         }
 
         // 2. 대상 사용자들 조회 (작성자 본인 제외)
-        const targetUserTypes = announcement.targetUserTypes as UserType[];
-        let whereClause: any = {
-          id: {
-            not: announcement.createdBy // 작성자 본인 제외
-          }
-        };
-
-        if (!targetUserTypes.includes('ALL' as any)) {
-          whereClause.userType = { in: targetUserTypes };
-        }
-
+        // 항상 전체 사용자에게 발송
         const targetUsers = await tx.users.findMany({
-          where: whereClause,
+          where: {
+            id: {
+              not: announcement.createdBy // 작성자 본인 제외
+            }
+          },
           select: { id: true, userType: true },
         });
 
@@ -235,7 +297,7 @@ export async function POST(
 
       return NextResponse.json({
         success: true,
-        message: `공지사항이 ${result.sentCount}명에게 발송되었습니다.`,
+        message: "저장한 공지사항을 발송했습니다.",
         data: {
           sentCount: result.sentCount,
           totalRecipients: result.totalRecipients,

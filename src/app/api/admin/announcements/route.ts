@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { NotificationType, NotificationPriority } from "@prisma/client";
+import { NotificationType, NotificationPriority, NotificationBatchStatus } from "@prisma/client";
 import { nanoid } from "nanoid";
 
 export async function GET(req: NextRequest) {
@@ -48,6 +48,15 @@ export async function GET(req: NextRequest) {
             },
           },
         },
+        notification_batches: {
+          select: {
+            id: true,
+            status: true,
+            sentCount: true,
+            totalRecipients: true,
+            completedAt: true,
+          },
+        },
       },
       orderBy: {
         notifications: {
@@ -64,27 +73,30 @@ export async function GET(req: NextRequest) {
           announcement.users?.hospitals?.representativeName ||
           "관리자";
 
-        // Count all individual notifications sent for this announcement
-        const totalSentNotifications = await prisma.notifications.count({
-          where: {
-            type: NotificationType.ANNOUNCEMENT,
-            senderId: announcement.createdBy,
-            title: announcement.notifications.title,
-          },
-        });
+        // notification_batches에서 COMPLETED 상태인 배치 확인
+        const completedBatch = announcement.notification_batches?.find(
+          (batch: any) => batch.status === NotificationBatchStatus.COMPLETED
+        );
 
-        // Count read notifications for this announcement
-        const totalReadNotifications = await prisma.notifications.count({
-          where: {
-            type: NotificationType.ANNOUNCEMENT,
-            senderId: announcement.createdBy,
-            title: announcement.notifications.title,
-            isRead: true,
-          },
-        });
+        // 발송된 공지사항인지 확인 (COMPLETED 상태의 배치가 있는지)
+        const isSent = !!completedBatch;
+        const status = isSent ? "SENT" : "DRAFT";
 
-        // Determine status based on whether any notifications were sent
-        const status = totalSentNotifications > 0 ? "SENT" : "DRAFT";
+        // 발송 통계 계산
+        const totalSentNotifications = completedBatch?.sentCount || 0;
+        const totalRecipients = completedBatch?.totalRecipients || 0;
+
+        // Count read notifications for this announcement (발송된 경우에만)
+        const totalReadNotifications = isSent
+          ? await prisma.notifications.count({
+              where: {
+                type: NotificationType.ANNOUNCEMENT,
+                senderId: announcement.createdBy,
+                title: announcement.notifications.title,
+                isRead: true,
+              },
+            })
+          : 0;
 
         return {
           id: announcement.id,
@@ -94,12 +106,12 @@ export async function GET(req: NextRequest) {
           priority: announcement.priority || "NORMAL",
           status: status,
           sendCount: totalSentNotifications,
-          totalRecipients: totalSentNotifications,
+          totalRecipients: totalRecipients,
           readCount: totalReadNotifications,
           author: authorName,
           createdAt: announcement.notifications?.createdAt || new Date(),
           updatedAt: announcement.notifications?.updatedAt || new Date(),
-          sentAt: totalSentNotifications > 0 ? announcement.notifications?.createdAt : null,
+          sentAt: completedBatch?.completedAt || null,
           targetUsers: announcement.targetUserTypes || [],
         };
       })

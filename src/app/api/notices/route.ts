@@ -1,132 +1,149 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { NotificationType } from "@prisma/client";
+import { NotificationType, NotificationBatchStatus } from "@prisma/client";
 import { getCurrentUser } from "@/actions/auth";
 import { nanoid } from "nanoid";
 
 export async function GET(req: NextRequest) {
   try {
-    // 인증 확인
+    // 인증은 선택사항 (비회원도 접근 가능)
     const userResult = await getCurrentUser();
-    if (!userResult.success || !userResult.user) {
-      return NextResponse.json(
-        { success: false, error: "인증이 필요합니다." },
-        { status: 401 }
-      );
-    }
+    const user = userResult.success ? userResult.user : null;
 
-    const user = userResult.user;
-
-    // 해당 사용자의 공지사항 타입 알림만 조회
-    const announcements = await prisma.notifications.findMany({
+    // 발송된 공지사항만 조회 (notification_batches가 있고 COMPLETED 상태인 것)
+    const sentBatches = await prisma.notification_batches.findMany({
       where: {
-        type: NotificationType.ANNOUNCEMENT,
-        recipientId: user.id,
+        status: NotificationBatchStatus.COMPLETED,
       },
       include: {
-        users_notifications_senderIdTousers: {
-          include: {
-            veterinarians: {
-              select: {
-                realName: true,
-                nickname: true,
-              },
-            },
-            veterinary_students: {
-              select: {
-                realName: true,
-                nickname: true,
-              },
-            },
-            hospitals: {
-              select: {
-                representativeName: true,
-                hospitalName: true,
-              },
-            },
-          },
-        },
         announcements: {
-          select: {
-            priority: true,
-            targetUserTypes: true,
-            expiresAt: true,
-            images: true,
+          include: {
+            notifications: {
+              select: {
+                id: true,
+                title: true,
+                content: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+            users: {
+              select: {
+                veterinarians: {
+                  select: {
+                    realName: true,
+                    nickname: true,
+                  },
+                },
+                veterinary_students: {
+                  select: {
+                    realName: true,
+                    nickname: true,
+                  },
+                },
+                hospitals: {
+                  select: {
+                    representativeName: true,
+                    hospitalName: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
-      orderBy: [
-        { isRead: "asc" }, // 읽지 않은 것 먼저
-        { createdAt: "desc" }, // 최신순
-      ],
+      orderBy: {
+        completedAt: "desc",
+      },
     });
 
-    // content에서 이미지 정보 파싱하고 데이터 변환
-    const transformedAnnouncements = announcements.map((announcement) => {
-      // 디버깅: 원본 데이터 로그
-      console.log(`Processing announcement ${announcement.id}:`, {
-        hasAnnouncements: !!announcement.announcements,
-        announcementImages: announcement.announcements?.images || 'no announcements',
-        contentPreview: announcement.content.substring(0, 100)
-      });
+    // 중복 제거: 같은 announcement는 하나만 표시
+    const uniqueAnnouncements = new Map();
+    for (const batch of sentBatches) {
+      const announcement = batch.announcements;
+      if (announcement && !uniqueAnnouncements.has(announcement.id)) {
+        uniqueAnnouncements.set(announcement.id, announcement);
+      }
+    }
 
-      // content에서 이미지 정보 파싱 (JSON 형태로 저장된 경우)
-      let parsedContent = announcement.content;
-      let notificationImages: string[] = [];
-      
-      try {
-        const contentData = JSON.parse(announcement.content);
-        if (contentData.text && contentData.images) {
-          parsedContent = contentData.text;
-          notificationImages = contentData.images;
-          console.log(`Found ${notificationImages.length} images in notification content for ${announcement.id}`);
+    // 사용자가 로그인한 경우 읽음 상태 확인
+    const transformedAnnouncements = await Promise.all(
+      Array.from(uniqueAnnouncements.values()).map(async (announcement) => {
+        let isRead = false;
+        if (user) {
+          const userNotification = await prisma.notifications.findFirst({
+            where: {
+              type: NotificationType.ANNOUNCEMENT,
+              recipientId: user.id,
+              title: announcement.notifications.title,
+            },
+            select: {
+              isRead: true,
+            },
+          });
+          isRead = userNotification?.isRead || false;
         }
-      } catch (e) {
-        // JSON이 아닌 경우 원본 content 사용
-        parsedContent = announcement.content;
+
+        // content에서 이미지 정보 파싱 (JSON 형태로 저장된 경우)
+        let parsedContent = announcement.notifications.content;
+        let notificationImages: string[] = [];
+        
+        try {
+          const contentData = JSON.parse(announcement.notifications.content);
+          if (contentData.text && contentData.images) {
+            parsedContent = contentData.text;
+            notificationImages = contentData.images;
+          }
+        } catch (e) {
+          // JSON이 아닌 경우 원본 content 사용
+          parsedContent = announcement.notifications.content;
+        }
+
+        // announcement 이미지와 notification에서 파싱한 이미지 합치기
+        const allImages = [
+          ...(announcement.images || []),
+          ...notificationImages
+        ].filter(img => img && img.trim() !== '');
+
+        // 중복 제거
+        const uniqueImages = Array.from(new Set(allImages));
+
+        return {
+          id: announcement.notifications.id,
+          title: announcement.notifications.title,
+          content: parsedContent,
+          createdAt: announcement.notifications.createdAt,
+          updatedAt: announcement.notifications.updatedAt,
+          isRead,
+          announcements: {
+            priority: announcement.priority,
+            targetUserTypes: announcement.targetUserTypes,
+            expiresAt: announcement.expiresAt,
+            images: uniqueImages,
+          },
+          users_notifications_senderIdTousers: {
+            realName: announcement.users?.veterinarians?.realName ||
+                      announcement.users?.veterinary_students?.realName ||
+                      announcement.users?.hospitals?.representativeName ||
+                      "관리자",
+            nickname: announcement.users?.veterinarians?.nickname || null,
+          },
+        };
+      })
+    );
+
+    // 최신순 정렬 (읽지 않은 것 우선)
+    transformedAnnouncements.sort((a, b) => {
+      if (a.isRead !== b.isRead) {
+        return a.isRead ? 1 : -1;
       }
-
-      // announcement 이미지와 notification에서 파싱한 이미지 합치기
-      const allImages = [
-        ...(announcement.announcements?.images || []),
-        ...notificationImages
-      ].filter(img => img && img.trim() !== '');
-
-      // 중복 제거
-      const uniqueImages = Array.from(new Set(allImages));
-
-      const result = {
-        ...announcement,
-        content: parsedContent,
-        announcements: announcement.announcements ? {
-          ...announcement.announcements,
-          images: uniqueImages
-        } : null,
-      };
-
-      // 디버깅용 로그
-      if (uniqueImages.length > 0) {
-        console.log(`Announcement ${announcement.id} has ${uniqueImages.length} images:`, uniqueImages);
-      }
-
-      return result;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
-
-    // 중복 제거: 같은 제목과 내용을 가진 공지사항 중 최신 것만 유지
-    const uniqueAnnouncements = transformedAnnouncements.reduce((acc: any[], current) => {
-      const duplicate = acc.find(
-        item => item.title === current.title && item.content === current.content
-      );
-      if (!duplicate) {
-        acc.push(current);
-      }
-      return acc;
-    }, []);
 
     // 데이터가 없는 경우 빈 배열 반환
     return NextResponse.json({
       success: true,
-      data: uniqueAnnouncements || [],
+      data: transformedAnnouncements || [],
     });
   } catch (error) {
     console.error("Failed to fetch announcements:", error);
