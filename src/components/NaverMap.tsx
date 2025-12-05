@@ -85,14 +85,23 @@ const NaverMap = ({
 
           await new Promise((resolve, reject) => {
             script.onload = resolve;
-            script.onerror = reject;
+            script.onerror = (error) => {
+              console.error("네이버 지도 API 스크립트 로드 실패:", error);
+              console.error("Client ID:", process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID);
+              console.error("현재 도메인:", window.location.hostname);
+              reject(error);
+            };
             document.head.appendChild(script);
           });
         }
 
         // 에러 핸들러 설정
         window.navermap_authFailure = () => {
-          console.warn("네이버 지도 인증 실패");
+          console.error("네이버 지도 인증 실패 (401 오류)");
+          console.error("가능한 원인:");
+          console.error("1. 네이버 클라우드 플랫폼에서 현재 도메인이 등록되지 않았습니다.");
+          console.error("2. 현재 도메인:", window.location.hostname);
+          console.error("3. 네이버 클라우드 플랫폼 > AI·NAVER API > Application > 도메인 설정을 확인하세요.");
           showFallbackUI();
         };
 

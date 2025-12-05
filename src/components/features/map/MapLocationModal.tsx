@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 declare global {
   interface Window {
     naver: any;
+    navermap_authFailure?: () => void;
   }
 }
 
@@ -55,6 +56,16 @@ export const MapLocationModal: React.FC<MapLocationModalProps> = ({
       console.error('네이버 지도가 로드되지 않았습니다.');
       return;
     }
+
+    // 인증 실패 핸들러 설정
+    window.navermap_authFailure = () => {
+      console.error('네이버 지도 인증 실패 (401 오류)');
+      console.error('가능한 원인:');
+      console.error('1. 네이버 클라우드 플랫폼에서 현재 도메인이 등록되지 않았습니다.');
+      console.error('2. 현재 도메인:', window.location.hostname);
+      console.error('3. 네이버 클라우드 플랫폼 > AI·NAVER API > Application > 도메인 설정을 확인하세요.');
+      alert('네이버 지도 인증에 실패했습니다. 도메인 설정을 확인해주세요.');
+    };
 
     const mapOptions = {
       center: new window.naver.maps.LatLng(
@@ -371,8 +382,14 @@ export const MapLocationModal: React.FC<MapLocationModalProps> = ({
         onLoad={() => {
           setIsMapLoaded(true);
         }}
-        onError={() => {
-          console.error('네이버 지도 API 로드 실패');
+        onError={(error) => {
+          console.error('네이버 지도 API 스크립트 로드 실패:', error);
+          console.error('Client ID:', clientId);
+          console.error('현재 도메인:', typeof window !== 'undefined' ? window.location.hostname : 'N/A');
+          console.error('가능한 원인:');
+          console.error('1. 네이버 클라우드 플랫폼에서 현재 도메인이 등록되지 않았습니다.');
+          console.error('2. API 키가 올바르지 않습니다.');
+          console.error('3. 네이버 클라우드 플랫폼 > AI·NAVER API > Application > 도메인 설정을 확인하세요.');
           alert('네이버 지도를 불러올 수 없습니다. API 키와 도메인 설정을 확인해주세요.');
         }}
       />
