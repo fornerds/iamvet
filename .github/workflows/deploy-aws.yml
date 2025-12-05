@@ -279,6 +279,58 @@ jobs:
               exit 1
             fi
             
+            echo "=== Setting up Auto-Recovery System ==="
+            
+            # 자동 복구 시스템 설정
+            if [ ! -f "/home/ubuntu/iamvet/health-check.sh" ]; then
+              echo "자동 복구 시스템 설정 중..."
+              
+              # 헬스체크 스크립트 생성
+              cat > /home/ubuntu/iamvet/health-check.sh << 'HEALTHCHECK'
+            #!/bin/bash
+            
+            # Next.js 서버 헬스체크 스크립트
+            MAX_RESPONSE_TIME=5
+            RETRY_COUNT=3
+            
+            for i in $(seq 1 $RETRY_COUNT); do
+                if curl -f -s --max-time $MAX_RESPONSE_TIME http://localhost:3000 > /dev/null 2>&1; then
+                    echo "$(date): ✅ Next.js 서버 정상 응답"
+                    exit 0
+                fi
+                echo "$(date): ⚠️ 시도 $i/$RETRY_COUNT 실패, 재시도 중..."
+                sleep 2
+            done
+            
+            echo "$(date): ❌ Next.js 서버 응답 없음, PM2 재시작 시도"
+            
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+            
+            cd /home/ubuntu/iamvet
+            pm2 restart iamvet
+            
+            sleep 10
+            if curl -f -s --max-time $MAX_RESPONSE_TIME http://localhost:3000 > /dev/null 2>&1; then
+                echo "$(date): ✅ PM2 재시작 후 서버 정상 응답"
+                exit 0
+            else
+                echo "$(date): ❌ PM2 재시작 후에도 서버 응답 없음"
+                exit 1
+            fi
+            HEALTHCHECK
+              
+              chmod +x /home/ubuntu/iamvet/health-check.sh
+              
+              # Cron job 설정 (기존 제거 후 추가)
+              crontab -l 2>/dev/null | grep -v "health-check.sh" | crontab - 2>/dev/null || true
+              (crontab -l 2>/dev/null; echo "*/5 * * * * /home/ubuntu/iamvet/health-check.sh >> /home/ubuntu/iamvet/logs/health-check.log 2>&1") | crontab -
+              
+              echo "✅ 자동 복구 시스템 설정 완료"
+            else
+              echo "✅ 자동 복구 시스템 이미 설정됨"
+            fi
+            
             echo "=== Deployment Complete ==="
           ENDSSH
 
