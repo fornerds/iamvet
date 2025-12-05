@@ -5,6 +5,8 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // 연결 풀 설정: 최대 10개 연결, 타임아웃 20초
+  // DATABASE_URL에 ?connection_limit=10&pool_timeout=20 추가 필요
 }
 
 model announcements {

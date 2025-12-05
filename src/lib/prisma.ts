@@ -11,6 +11,8 @@ if (process.env.NODE_ENV === 'production') {
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  // 연결 풀 설정: DATABASE_URL에 connection_limit 파라미터 추가 필요
+  // 예: DATABASE_URL="postgresql://...?connection_limit=10&pool_timeout=20"
 });
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
