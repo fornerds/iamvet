@@ -219,7 +219,7 @@ jobs:
                 log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
                 merge_logs: true,
                 autorestart: true,
-                max_memory_restart: '1G',
+                max_memory_restart: '400M',  // 메모리 부족 문제 해결을 위해 400MB로 낮춤
                 watch: false,
                 ignore_watch: ['node_modules', 'logs', '.next'],
                 min_uptime: '10s',
