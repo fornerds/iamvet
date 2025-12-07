@@ -299,24 +299,72 @@ jobs:
             if [ ! -f "/home/ubuntu/iamvet/health-check.sh" ]; then
               echo "자동 복구 시스템 설정 중..."
               
-              # 헬스체크 스크립트 생성
+              # 헬스체크 스크립트 생성 (과도한 재시작 방지)
               cat > /home/ubuntu/iamvet/health-check.sh << 'HEALTHCHECK'
             #!/bin/bash
             
-            # Next.js 서버 헬스체크 스크립트
+            # Next.js 서버 헬스체크 스크립트 (과도한 재시작 방지)
             MAX_RESPONSE_TIME=5
             RETRY_COUNT=3
+            MIN_RESTART_INTERVAL=300  # 최소 재시작 간격 (5분)
+            RESTART_COUNT_FILE="/home/ubuntu/iamvet/logs/restart-count.txt"
+            LAST_RESTART_FILE="/home/ubuntu/iamvet/logs/last-restart.txt"
             
+            # 로그 디렉토리 생성
+            mkdir -p /home/ubuntu/iamvet/logs
+            
+            # 재시작 횟수 및 시간 추적
+            get_restart_count() {
+                if [ -f "$RESTART_COUNT_FILE" ]; then
+                    cat "$RESTART_COUNT_FILE"
+                else
+                    echo "0"
+                fi
+            }
+            
+            get_last_restart_time() {
+                if [ -f "$LAST_RESTART_FILE" ]; then
+                    cat "$LAST_RESTART_FILE"
+                else
+                    echo "0"
+                fi
+            }
+            
+            update_restart_info() {
+                local count=$(get_restart_count)
+                echo $((count + 1)) > "$RESTART_COUNT_FILE"
+                date +%s > "$LAST_RESTART_FILE"
+            }
+            
+            # 헬스체크 실행
             for i in $(seq 1 $RETRY_COUNT); do
                 if curl -f -s --max-time $MAX_RESPONSE_TIME http://localhost:3000 > /dev/null 2>&1; then
-                    echo "$(date): ✅ Next.js 서버 정상 응답"
+                    echo "$(date '+%Y-%m-%d %H:%M:%S'): ✅ Next.js 서버 정상 응답"
                     exit 0
                 fi
-                echo "$(date): ⚠️ 시도 $i/$RETRY_COUNT 실패, 재시도 중..."
-                sleep 2
+                if [ $i -lt $RETRY_COUNT ]; then
+                    echo "$(date '+%Y-%m-%d %H:%M:%S'): ⚠️ 시도 $i/$RETRY_COUNT 실패, 재시도 중..."
+                    sleep 2
+                fi
             done
             
-            echo "$(date): ❌ Next.js 서버 응답 없음, PM2 재시작 시도"
+            # 서버 응답 없음
+            echo "$(date '+%Y-%m-%d %H:%M:%S'): ❌ Next.js 서버 응답 없음"
+            
+            # 최근 재시작 시간 확인
+            LAST_RESTART=$(get_last_restart_time)
+            CURRENT_TIME=$(date +%s)
+            TIME_SINCE_LAST_RESTART=$((CURRENT_TIME - LAST_RESTART))
+            
+            # 최소 재시작 간격 체크 (과도한 재시작 방지)
+            if [ $TIME_SINCE_LAST_RESTART -lt $MIN_RESTART_INTERVAL ]; then
+                REMAINING_TIME=$((MIN_RESTART_INTERVAL - TIME_SINCE_LAST_RESTART))
+                echo "$(date '+%Y-%m-%d %H:%M:%S'): ⏸️ 최근 재시작 후 ${TIME_SINCE_LAST_RESTART}초 경과, 최소 간격(${MIN_RESTART_INTERVAL}초) 미달로 재시작 건너뜀 (${REMAINING_TIME}초 후 가능)"
+                exit 0
+            fi
+            
+            # PM2 재시작
+            echo "$(date '+%Y-%m-%d %H:%M:%S'): 🔄 PM2 재시작 시도"
             
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
@@ -324,12 +372,23 @@ jobs:
             cd /home/ubuntu/iamvet
             pm2 restart iamvet
             
+            # 재시작 정보 업데이트
+            update_restart_info
+            RESTART_COUNT=$(get_restart_count)
+            
+            # 재시작 후 확인
             sleep 10
             if curl -f -s --max-time $MAX_RESPONSE_TIME http://localhost:3000 > /dev/null 2>&1; then
-                echo "$(date): ✅ PM2 재시작 후 서버 정상 응답"
+                echo "$(date '+%Y-%m-%d %H:%M:%S'): ✅ PM2 재시작 후 서버 정상 응답 (총 재시작 횟수: ${RESTART_COUNT})"
                 exit 0
             else
-                echo "$(date): ❌ PM2 재시작 후에도 서버 응답 없음"
+                echo "$(date '+%Y-%m-%d %H:%M:%S'): ❌ PM2 재시작 후에도 서버 응답 없음 (총 재시작 횟수: ${RESTART_COUNT})"
+                
+                # 연속 실패 시 경고 (5회 이상)
+                if [ $RESTART_COUNT -ge 5 ]; then
+                    echo "$(date '+%Y-%m-%d %H:%M:%S'): 🚨 경고: 재시작 횟수가 ${RESTART_COUNT}회에 도달했습니다. 근본 원인 확인이 필요합니다."
+                fi
+                
                 exit 1
             fi
             HEALTHCHECK
