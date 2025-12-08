@@ -58,9 +58,29 @@ fi
 
 echo ""
 echo "=== Cursor 서버 디렉토리 생성 ==="
+# 홈 디렉토리 생성
 mkdir -p ~/.cursor-server
 chmod 755 ~/.cursor-server
+echo "✅ 홈 디렉토리: ~/.cursor-server"
 ls -ld ~/.cursor-server
+
+# 임시 디렉토리 생성 (sudo 필요할 수 있음)
+if mkdir -p /tmp/.cursor-server 2>/dev/null; then
+    chmod 755 /tmp/.cursor-server
+    echo "✅ 임시 디렉토리: /tmp/.cursor-server"
+    ls -ld /tmp/.cursor-server
+else
+    echo "⚠️  /tmp/.cursor-server 생성 실패 (권한 문제일 수 있음)"
+    echo "   sudo로 생성 시도..."
+    sudo mkdir -p /tmp/.cursor-server 2>/dev/null && sudo chown $USER:$USER /tmp/.cursor-server && sudo chmod 755 /tmp/.cursor-server && echo "✅ sudo로 생성 성공" || echo "❌ 생성 실패 (무시 가능)"
+fi
+
+# 기존 파일이 있으면 임시 디렉토리로도 복사
+if [ -d ~/.cursor-server ] && [ "$(ls -A ~/.cursor-server 2>/dev/null)" ]; then
+    echo ""
+    echo "기존 파일 확인 중..."
+    ls -lh ~/.cursor-server/ | head -3
+fi
 
 echo ""
 echo "✅ 설정 완료!"
