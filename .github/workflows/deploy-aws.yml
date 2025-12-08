@@ -209,7 +209,7 @@ jobs:
                 exec_mode: 'fork',
                 env: {
                   NODE_ENV: 'production',
-                  PORT: 3000,
+                  PORT: 3001,
                   HOSTNAME: '0.0.0.0',
                   PATH: process.env.PATH + ':' + nodeBinPath,
                   ...envVars
@@ -292,7 +292,7 @@ jobs:
               echo "✅ PM2 프로세스가 정상적으로 시작되었습니다."
               # 추가 확인: 실제로 서버가 응답하는지 테스트
               sleep 5
-              if curl -f http://localhost:3000 > /dev/null 2>&1; then
+              if curl -f http://localhost:3001 > /dev/null 2>&1; then
                 echo "✅ Next.js 서버가 정상적으로 응답합니다."
               else
                 echo "⚠️ 경고: PM2는 실행 중이지만 서버가 응답하지 않습니다."
@@ -349,7 +349,7 @@ jobs:
             
             # 헬스체크 실행
             for i in $(seq 1 $RETRY_COUNT); do
-                if curl -f -s --max-time $MAX_RESPONSE_TIME http://localhost:3000 > /dev/null 2>&1; then
+                if curl -f -s --max-time $MAX_RESPONSE_TIME http://localhost:3001 > /dev/null 2>&1; then
                     echo "$(date '+%Y-%m-%d %H:%M:%S'): ✅ Next.js 서버 정상 응답"
                     exit 0
                 fi
@@ -389,7 +389,7 @@ jobs:
             
             # 재시작 후 확인
             sleep 10
-            if curl -f -s --max-time $MAX_RESPONSE_TIME http://localhost:3000 > /dev/null 2>&1; then
+            if curl -f -s --max-time $MAX_RESPONSE_TIME http://localhost:3001 > /dev/null 2>&1; then
                 echo "$(date '+%Y-%m-%d %H:%M:%S'): ✅ PM2 재시작 후 서버 정상 응답 (총 재시작 횟수: ${RESTART_COUNT})"
                 exit 0
             else

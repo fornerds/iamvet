@@ -139,62 +139,22 @@
 
 ---
 
-## 📦 ARCHIVED - 더 이상 사용하지 않음 (참고용)
+## 📦 ARCHIVED - 더 이상 사용하지 않음 (제거됨)
 
-### 초기 설정 (이미 완료됨)
-- **`aws-ec2-setup.sh`** 📦 - EC2 인스턴스 초기 생성
-  - 이미 인스턴스가 생성되어 있음
-  - 새 인스턴스 생성 시 참고용
-
-- **`setup-aws-cli.sh`** 📦 - AWS CLI 초기 설정
-  - 이미 설정되어 있음
-  - 새 환경 설정 시 참고용
-
-- **`setup-nginx-ssl.sh`** 📦 - Nginx SSL 초기 설정
-  - 이미 설정되어 있음
-  - 새 서버 설정 시 참고용
-
-- **`setup-ssl.sh`** 📦 - SSL 인증서 초기 설정
-  - 이미 설정되어 있음
-  - 새 도메인 설정 시 참고용
-
-- **`setup-auto-recovery.sh`** 📦 - 자동 복구 시스템 초기 설정
-  - 배포 워크플로우에 통합됨
-  - 수동 설정 시 참고용
-
-- **`improve-health-check.sh`** 📦 - 헬스체크 개선
-  - 배포 워크플로우에 통합됨
-  - 참고용
-
-### 마이그레이션 (완료됨)
-- **`migrate-s3-data.sh`** 📦 - S3 데이터 마이그레이션
-  - 마이그레이션 완료
-  - 참고용
-
-- **`recreate-instance-with-new-key.sh`** 📦 - 새 키로 인스턴스 재생성
-  - 이미 완료됨
-  - 참고용
-
-- **`setup-vercel-deployment.sh`** 📦 - Vercel 배포 설정
-  - 현재 AWS 사용 중
-  - Vercel 마이그레이션 시 참고용
-
-### 기타
-- **`deploy-to-ec2.sh`** 📦 - 수동 배포 스크립트
-  - GitHub Actions 자동 배포 사용 중
-  - 수동 배포 필요 시 참고용
-
-- **`add-ssh-key-to-instance.sh`** 📦 - SSH 키 추가
-  - 이미 완료됨
-  - 참고용
-
-- **`create-rds-instance.sh`** 📦 - RDS 인스턴스 생성
-  - 이미 생성되어 있음
-  - 새 RDS 생성 시 참고용
-
-- **`upgrade-server-spec.sh`** 📦 - 서버 사양 업그레이드
-  - AWS 콘솔에서 직접 업그레이드 권장
-  - 참고용
+다음 스크립트들은 더 이상 사용하지 않아 제거되었습니다:
+- `aws-ec2-setup.sh` - EC2 인스턴스 초기 생성 (이미 완료)
+- `setup-aws-cli.sh` - AWS CLI 초기 설정 (이미 완료)
+- `setup-nginx-ssl.sh` - Nginx SSL 초기 설정 (이미 완료)
+- `setup-ssl.sh` - SSL 인증서 초기 설정 (이미 완료)
+- `setup-auto-recovery.sh` - 자동 복구 시스템 (워크플로우에 통합)
+- `improve-health-check.sh` - 헬스체크 개선 (워크플로우에 통합)
+- `migrate-s3-data.sh` - S3 데이터 마이그레이션 (완료)
+- `recreate-instance-with-new-key.sh` - 새 키로 인스턴스 재생성 (완료)
+- `setup-vercel-deployment.sh` - Vercel 배포 설정 (AWS 사용 중)
+- `deploy-to-ec2.sh` - 수동 배포 스크립트 (GitHub Actions 사용)
+- `add-ssh-key-to-instance.sh` - SSH 키 추가 (완료)
+- `create-rds-instance.sh` - RDS 인스턴스 생성 (완료)
+- `upgrade-server-spec.sh` - 서버 사양 업그레이드 (AWS 콘솔 사용)
 
 ---
 
