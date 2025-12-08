@@ -132,6 +132,11 @@
 - **`reboot-server.sh`** 🔧 - 서버 재부팅
   - 서버 재부팅 (주의해서 사용)
 
+- **`setup-cursor-remote.sh`** 🔧 - Cursor Remote SSH 연결 설정
+  - Cursor Remote SSH 연결을 위한 필수 도구 설치
+  - `curl`, `wget` 설치
+  - `.cursor-server` 디렉토리 생성
+
 ---
 
 ## 📦 ARCHIVED - 더 이상 사용하지 않음 (참고용)
