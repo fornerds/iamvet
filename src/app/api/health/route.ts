@@ -39,7 +39,7 @@ export async function GET() {
       // 데이터베이스 오류는 치명적이지 않을 수 있으므로 상태는 'ok' 유지
     }
 
-    health.checks.responseTime = Date.now() - startTime;
+    health.responseTime = Date.now() - startTime;
 
     return NextResponse.json(health, {
       status: 200,
