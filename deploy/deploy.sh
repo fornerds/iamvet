@@ -7,13 +7,19 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# SSH 키 파일 자동 찾기
-if [ -f "keys/iamvet-key-new.pem" ]; then
+# SSH 키 파일 자동 찾기 (iam-vet.pem 우선)
+if [ -f "keys/iam-vet.pem" ]; then
+    KEY_FILE="keys/iam-vet.pem"
+elif [ -f "keys/iamvet-key-new.pem" ]; then
     KEY_FILE="keys/iamvet-key-new.pem"
 elif [ -f "keys/iamvet-key.pem" ]; then
     KEY_FILE="keys/iamvet-key.pem"
 else
     echo "❌ SSH 키 파일을 찾을 수 없습니다."
+    echo "다음 위치를 확인하세요:"
+    echo "  - keys/iam-vet.pem (권장)"
+    echo "  - keys/iamvet-key-new.pem"
+    echo "  - keys/iamvet-key.pem"
     exit 1
 fi
 
@@ -55,13 +61,25 @@ chmod 600 "$KEY_FILE" 2>/dev/null || true
 ssh -i "$KEY_FILE" -o StrictHostKeyChecking=no ${EC2_USER}@${PUBLIC_IP} << ENDSSH
 set -e
 
+# NVM 환경 로드 (가장 먼저)
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+# PATH에 Node.js 추가
+export PATH="$HOME/.nvm/versions/node/\$(nvm current)/bin:\$PATH"
 
 PROJECT_DIR="${PROJECT_DIR}"
 cd "$PROJECT_DIR"
 
 echo "=== 1. 기존 프로세스 중지 ==="
+# NVM 환경 확인
+if ! command -v node &> /dev/null; then
+    echo "⚠️ Node.js를 찾을 수 없습니다. NVM 환경을 다시 로드합니다."
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    nvm use 20 || nvm install 20
+fi
+
 # 모든 포트에서 실행 중인 프로세스 중지
 if ss -tlnp | grep -E ":(3000|3001)" > /dev/null 2>&1; then
     echo "포트 3000/3001에서 실행 중인 프로세스 중지 중..."
@@ -70,11 +88,15 @@ if ss -tlnp | grep -E ":(3000|3001)" > /dev/null 2>&1; then
     sleep 2
 fi
 
-# PM2 프로세스 중지
-if pm2 list | grep -q iamvet; then
-    pm2 stop iamvet || true
-    pm2 delete iamvet || true
-    sleep 2
+# PM2 프로세스 중지 (NVM 환경에서 실행)
+if command -v pm2 &> /dev/null; then
+    if pm2 list | grep -q iamvet; then
+        pm2 stop iamvet || true
+        pm2 delete iamvet || true
+        sleep 2
+    fi
+else
+    echo "⚠️ PM2를 찾을 수 없습니다. (아직 설치되지 않았거나 PATH 문제)"
 fi
 
 echo ""
@@ -82,8 +104,17 @@ echo "=== 2. 최신 코드 가져오기 ==="
 # Git 저장소가 없으면 클론
 if [ ! -d ".git" ]; then
     echo "Git 저장소가 없습니다. 클론합니다..."
+    # 기존 디렉토리가 비어있지 않으면 백업 후 클론
+    if [ "$(ls -A $PROJECT_DIR 2>/dev/null)" ]; then
+        echo "기존 파일이 있습니다. 백업 후 클론합니다..."
+        cd /home/ubuntu
+        mv iamvet iamvet.backup.\$(date +%Y%m%d_%H%M%S) 2>/dev/null || true
+        mkdir -p iamvet
+        cd iamvet
+    fi
     git clone https://github.com/fornerds/iamvet.git .
 else
+    echo "Git 저장소가 있습니다. 최신 코드를 가져옵니다..."
     git fetch origin
     git reset --hard origin/main
     git clean -fd
@@ -212,6 +243,13 @@ echo "✅ ecosystem.config.js 생성 완료"
 
 echo ""
 echo "=== 8. PM2 시작 ==="
+# PM2 확인
+if ! command -v pm2 &> /dev/null; then
+    echo "❌ PM2를 찾을 수 없습니다."
+    echo "PM2를 설치합니다..."
+    npm install -g pm2
+fi
+
 pm2 start ecosystem.config.js
 pm2 save
 echo "✅ PM2 시작 완료"
