@@ -58,27 +58,40 @@ echo ""
 
 chmod 600 "$KEY_FILE" 2>/dev/null || true
 
-ssh -i "$KEY_FILE" -o StrictHostKeyChecking=no ${EC2_USER}@${PUBLIC_IP} << ENDSSH
+ssh -i "$KEY_FILE" -o StrictHostKeyChecking=no ${EC2_USER}@${PUBLIC_IP} << 'ENDSSH'
 set -e
 
 # NVM 환경 로드 (가장 먼저)
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+    . "$NVM_DIR/nvm.sh"
+else
+    echo "❌ NVM이 설치되지 않았습니다."
+    echo "setup-server.sh를 먼저 실행하세요."
+    exit 1
+fi
+
+# Node.js 버전 확인 및 설정
+if ! command -v node &> /dev/null; then
+    echo "Node.js를 찾을 수 없습니다. Node.js 20을 설치합니다..."
+    nvm install 20
+fi
+
+# Node.js 20 사용
+nvm use 20 || nvm install 20
+nvm alias default 20
 
 # PATH에 Node.js 추가
-export PATH="$HOME/.nvm/versions/node/\$(nvm current)/bin:\$PATH"
+export PATH="$HOME/.nvm/versions/node/$(nvm current)/bin:$PATH"
 
-PROJECT_DIR="${PROJECT_DIR}"
+# 확인
+echo "Node.js 버전: $(node --version)"
+echo "npm 버전: $(npm --version)"
+
+PROJECT_DIR="/home/ubuntu/iamvet"
 cd "$PROJECT_DIR"
 
 echo "=== 1. 기존 프로세스 중지 ==="
-# NVM 환경 확인
-if ! command -v node &> /dev/null; then
-    echo "⚠️ Node.js를 찾을 수 없습니다. NVM 환경을 다시 로드합니다."
-    export NVM_DIR="$HOME/.nvm"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-    nvm use 20 || nvm install 20
-fi
 
 # 모든 포트에서 실행 중인 프로세스 중지
 if ss -tlnp | grep -E ":(3000|3001)" > /dev/null 2>&1; then
@@ -243,12 +256,14 @@ echo "✅ ecosystem.config.js 생성 완료"
 
 echo ""
 echo "=== 8. PM2 시작 ==="
-# PM2 확인
+# PM2 확인 및 설치
 if ! command -v pm2 &> /dev/null; then
-    echo "❌ PM2를 찾을 수 없습니다."
-    echo "PM2를 설치합니다..."
+    echo "PM2를 찾을 수 없습니다. 설치합니다..."
     npm install -g pm2
+    echo "✅ PM2 설치 완료"
 fi
+
+echo "PM2 버전: $(pm2 --version)"
 
 pm2 start ecosystem.config.js
 pm2 save
