@@ -11,7 +11,8 @@ import { verifyToken } from "@/lib/auth";
 import { sql } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
+  // Next.js 15 호환: request.nextUrl 사용
+  const searchParams = request.nextUrl.searchParams;
 
   // Parse filters from query parameters
   const parseArrayParam = (param: string | null) => {
