@@ -11,23 +11,8 @@ import { verifyToken } from "@/lib/auth";
 import { sql } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
-  // Next.js 15 호환: request.nextUrl 사용 (없으면 request.url로 fallback)
-  let searchParams: URLSearchParams;
-  try {
-    if (request.nextUrl) {
-      searchParams = request.nextUrl.searchParams;
-    } else if (request.url) {
-      searchParams = new URL(request.url).searchParams;
-    } else {
-      throw new Error('Neither request.nextUrl nor request.url is available');
-    }
-  } catch (error) {
-    console.error('[Jobs API] URL parsing error:', error);
-    return NextResponse.json(
-      createErrorResponse('Invalid request URL'),
-      { status: 400 }
-    );
-  }
+  // Next.js 15: request.nextUrl.searchParams 직접 사용
+  const searchParams = request.nextUrl.searchParams;
 
   // Parse filters from query parameters
   const parseArrayParam = (param: string | null) => {
