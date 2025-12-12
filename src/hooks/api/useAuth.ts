@@ -158,8 +158,67 @@ export function useLogin() {
   return useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
       setLoading(true);
-      const result = await loginAction(credentials);
-      return result;
+      try {
+        // Server Action 호출 (타임아웃 설정)
+        const result = await Promise.race([
+          loginAction(credentials),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('로그인 요청 시간이 초과되었습니다')), 15000)
+          )
+        ]) as any;
+        return result;
+      } catch (error) {
+        console.error('[useLogin] Server Action 오류:', error);
+        // Server Action 실패 시 API Route로 fallback
+        const userType = credentials.userType?.toLowerCase() || 'veterinarian';
+        const response = await fetch(`/api/login/${userType}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: credentials.email,
+            password: credentials.password,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ 
+            status: "error", 
+            message: "로그인 요청이 실패했습니다" 
+          }));
+          throw new Error(errorData.message || '로그인에 실패했습니다');
+        }
+
+        const data = await response.json();
+        
+        // API Route 응답을 Server Action 형식으로 변환
+        if (data.status === 'success' && data.data) {
+          const apiData = data.data;
+          const user = apiData.user;
+          
+          return {
+            success: true,
+            user: {
+              id: user.id,
+              email: user.email,
+              phone: user.phone || '',
+              realName: user.realName || user.nickname,
+              nickname: user.nickname || user.username,
+              userType: user.userType,
+              profileImage: user.profileImage,
+              hospitalName: user.hospitalName,
+              hospitalLogo: user.hospitalLogo,
+            },
+            tokens: apiData.tokens || {
+              accessToken: apiData.tokens?.accessToken,
+              refreshToken: apiData.tokens?.refreshToken,
+            },
+          };
+        } else {
+          throw new Error(data.message || '로그인에 실패했습니다');
+        }
+      }
     },
     onSuccess: (result) => {
       if (result.success && 'user' in result && result.user) {

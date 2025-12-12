@@ -199,13 +199,20 @@ export async function login(credentials: LoginCredentials) {
     );
 
     // Set HTTP-only cookie
-    const cookieStore = await cookies();
-    cookieStore.set("auth-token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-    });
+    // Next.js 15.5.7에서 cookies()는 동기적으로 호출해야 함
+    try {
+      const cookieStore = await cookies();
+      cookieStore.set("auth-token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60, // 7 days
+        path: "/",
+      });
+    } catch (cookieError) {
+      console.error("[login] Cookie 설정 오류:", cookieError);
+      // 쿠키 설정 실패해도 로그인은 계속 진행 (토큰은 응답에 포함됨)
+    }
 
     // 병원 정보가 있는 경우 추가로 가져오기
     let hospitalName = null;
@@ -239,6 +246,8 @@ export async function login(credentials: LoginCredentials) {
       "[login] Final login result:",
       JSON.stringify(loginResult, null, 2)
     );
+    
+    // Next.js 15.5.7에서 Server Actions 응답이 제대로 전달되도록 명시적 반환
     return loginResult;
   } catch (error) {
     console.error("Login error:", error);
