@@ -171,8 +171,8 @@ jobs:
               npm install --production=false --prefer-offline --no-audit
             else
               echo "node_modules 없음, 새로 설치 (메모리 제한 적용)..."
-              # 메모리 제한을 두고 설치
-              NODE_OPTIONS="--max-old-space-size=1024" npm install --production=false --no-audit
+              # 메모리 제한을 두고 설치 (t3.large는 메모리 여유가 있음)
+              NODE_OPTIONS="--max-old-space-size=2048" npm install --production=false --no-audit
             fi
             
             # Prisma 클라이언트 생성
@@ -196,8 +196,8 @@ jobs:
             
             # Next.js 빌드 (메모리 최적화)
             echo "=== Building Next.js Application ==="
-            # 메모리 제한을 두고 빌드
-            NODE_OPTIONS="--max-old-space-size=2048" npm run build
+            # 메모리 제한을 두고 빌드 (t3.large는 메모리 여유가 있음)
+            NODE_OPTIONS="--max-old-space-size=4096" npm run build
             
             # 빌드 결과 확인
             echo "=== Verifying Build ==="
@@ -252,8 +252,8 @@ jobs:
                 log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
                 merge_logs: true,
                 autorestart: true,
-                max_memory_restart: '1.5G',  // 서버 사양 업그레이드 후 메모리 제한 증가
-                node_args: '--max-old-space-size=1536',  // Node.js 힙 메모리 제한
+                max_memory_restart: '3G',  // t3.large (8GB) 업그레이드 후 메모리 제한 증가
+                node_args: '--max-old-space-size=3072',  // Node.js 힙 메모리 제한 (3GB)
                 watch: false,
                 ignore_watch: ['node_modules', 'logs', '.next'],
                 min_uptime: '10s',
