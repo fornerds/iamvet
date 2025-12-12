@@ -22,6 +22,15 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
+      - name: Validate Secrets
+        run: |
+          if [ -z "${{ secrets.DATABASE_URL }}" ]; then
+            echo "❌ DATABASE_URL Secret이 설정되지 않았습니다!"
+            echo "GitHub 저장소의 Settings > Secrets and variables > Actions에서 DATABASE_URL을 확인하세요."
+            exit 1
+          fi
+          echo "✅ 필수 Secrets 확인 완료"
+      
       - name: Deploy to EC2
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
@@ -85,6 +94,21 @@ jobs:
             
             # 환경 변수 파일 생성
             echo "=== Creating .env.production ==="
+            
+            # DATABASE_URL 검증
+            if [ -z "$DATABASE_URL" ]; then
+              echo "❌ 오류: DATABASE_URL Secret이 설정되지 않았습니다!"
+              echo "GitHub 저장소의 Settings > Secrets and variables > Actions에서 DATABASE_URL을 확인하세요."
+              exit 1
+            fi
+            
+            # DATABASE_URL 형식 검증
+            if ! echo "$DATABASE_URL" | grep -qE "^postgresql://"; then
+              echo "⚠️ 경고: DATABASE_URL이 올바른 형식이 아닐 수 있습니다"
+            fi
+            
+            echo "✅ DATABASE_URL Secret 확인됨 (값은 보안상 표시하지 않음)"
+            
             # DATABASE_URL에 연결 풀 파라미터 추가 (없는 경우)
             FINAL_DATABASE_URL="$DATABASE_URL"
             if echo "$DATABASE_URL" | grep -vq "connection_limit"; then
