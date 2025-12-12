@@ -173,6 +173,17 @@ echo "=== 6. 빌드 ==="
 if [ ! -d ".next" ] || [ "src" -nt ".next" ] || [ "package.json" -nt ".next" ]; then
     echo "빌드 중..."
     rm -rf .next
+    
+    # .env.production 파일에서 환경 변수 로드
+    if [ -f ".env.production" ]; then
+        echo ".env.production 파일에서 환경 변수 로드 중..."
+        set -a
+        source .env.production 2>/dev/null || true
+        set +a
+        echo "✅ 환경 변수 로드 완료"
+    fi
+    
+    # 빌드 실행 (환경 변수 포함)
     npm run build
     echo "✅ 빌드 완료"
 else
