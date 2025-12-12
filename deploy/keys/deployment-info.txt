@@ -1,0 +1,11 @@
+Public IP: 3.35.8.129
+Elastic IP: 43.202.215.217
+Instance ID: i-0a510fa440754cb0e
+Instance Type: t2.medium
+Region: ap-northeast-2
+Key Pair: iam-vet
+AMI: Ubuntu 24.04 (noble)
+Created: 2025-12-12 16:09:01 KST
+Status: Running
+Private IP: 172.31.44.216
+Public DNS: ec2-3-35-8-129.ap-northeast-2.compute.amazonaws.com
