@@ -163,9 +163,17 @@ jobs:
             KAKAO_ALIMTALK_TEMPLATE_ID="$KAKAO_ALIMTALK_TEMPLATE_ID"
             ENVEOF
             
-            # 의존성 설치
+            # 의존성 설치 (메모리 최적화)
             echo "=== Installing Dependencies ==="
-            npm ci --production=false
+            # 메모리 부족 방지를 위해 기존 node_modules 유지
+            if [ -d "node_modules" ]; then
+              echo "기존 node_modules 유지, 업데이트만 수행..."
+              npm install --production=false --prefer-offline --no-audit
+            else
+              echo "node_modules 없음, 새로 설치 (메모리 제한 적용)..."
+              # 메모리 제한을 두고 설치
+              NODE_OPTIONS="--max-old-space-size=1024" npm install --production=false --no-audit
+            fi
             
             # Prisma 클라이언트 생성
             echo "=== Generating Prisma Client ==="
@@ -186,9 +194,10 @@ jobs:
             find .next -type d -delete 2>/dev/null || true
             echo "✅ 빌드 캐시 삭제 완료"
             
-            # Next.js 빌드
+            # Next.js 빌드 (메모리 최적화)
             echo "=== Building Next.js Application ==="
-            npm run build
+            # 메모리 제한을 두고 빌드
+            NODE_OPTIONS="--max-old-space-size=2048" npm run build
             
             # 빌드 결과 확인
             echo "=== Verifying Build ==="
@@ -233,7 +242,7 @@ jobs:
                 exec_mode: 'fork',
                 env: {
                   NODE_ENV: 'production',
-                  PORT: 3001,
+                  PORT: 3000,
                   HOSTNAME: '0.0.0.0',
                   PATH: process.env.PATH + ':' + nodeBinPath,
                   ...envVars
