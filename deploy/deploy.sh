@@ -118,10 +118,11 @@ echo "=== 2. 최신 코드 가져오기 ==="
 if [ ! -d ".git" ]; then
     echo "Git 저장소가 없습니다. 클론합니다..."
     # 기존 디렉토리가 비어있지 않으면 백업 후 클론
-    if [ "$(ls -A $PROJECT_DIR 2>/dev/null)" ]; then
+    if [ -n "$(ls -A $PROJECT_DIR 2>/dev/null)" ]; then
         echo "기존 파일이 있습니다. 백업 후 클론합니다..."
         cd /home/ubuntu
-        mv iamvet iamvet.backup.\$(date +%Y%m%d_%H%M%S) 2>/dev/null || true
+        BACKUP_NAME="iamvet.backup.$(date +%Y%m%d_%H%M%S)"
+        mv iamvet "$BACKUP_NAME" 2>/dev/null || true
         mkdir -p iamvet
         cd iamvet
     fi
