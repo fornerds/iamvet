@@ -78,7 +78,7 @@ const QuillEditor = forwardRef<QuillEditorRef, QuillEditorProps>(
 
         try {
           // 커스텀 Size 스타일 등록
-          const Size = Quill.import('attributors/style/size');
+          const Size = Quill.import('attributors/style/size') as any;
           Size.whitelist = ['10px', '12px', '14px', '16px', '18px', '24px', '32px', '36px', '48px'];
           Quill.register(Size, true);
 
