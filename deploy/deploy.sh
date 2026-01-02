@@ -181,12 +181,24 @@ if [ ! -d ".next" ] || [ ! -f ".next/BUILD_ID" ] || [ "src" -nt ".next" ] || [ "
         source .env.production 2>/dev/null || true
         set +a
         echo "✅ 환경 변수 로드 완료"
+        
+        # DATABASE_URL 확인
+        if [ -z "$DATABASE_URL" ] || [ "$DATABASE_URL" = '""' ] || [ "$DATABASE_URL" = "''" ]; then
+            echo "❌ DATABASE_URL이 설정되지 않았거나 빈 값입니다!"
+            echo ".env.production 파일을 확인하세요."
+            exit 1
+        fi
+        echo "✅ DATABASE_URL 확인 완료: ${DATABASE_URL:0:50}..."
+    else
+        echo "❌ .env.production 파일이 없습니다!"
+        exit 1
     fi
     
-    # 빌드 실행 (환경 변수 포함)
-    # admin/dashboard 라우트의 빌드 오류는 무시하고 계속 진행
+    # 빌드 실행 (환경 변수 명시적으로 전달)
+    echo "빌드 실행 중 (DATABASE_URL 포함)..."
+    export DATABASE_URL
     npm run build || {
-        echo "⚠️ 빌드 중 일부 오류가 발생했지만 계속 진행합니다..."
+        echo "❌ 빌드 실패"
         # BUILD_ID가 생성되었는지 확인
         if [ ! -f ".next/BUILD_ID" ]; then
             echo "❌ BUILD_ID가 생성되지 않았습니다. 빌드가 실패했습니다."

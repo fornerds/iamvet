@@ -32,6 +32,11 @@ const sqlFunction = async (
   strings: TemplateStringsArray,
   ...values: any[]
 ): Promise<any[]> => {
+  // 빌드 타임에는 빈 배열 반환
+  if (!pool || !DATABASE_URL) {
+    return [];
+  }
+
   try {
     // 템플릿 리터럴을 파싱하여 쿼리와 파라미터 분리
     const queryParts: string[] = [];
