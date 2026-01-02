@@ -4,9 +4,10 @@ import { Pool } from "pg";
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
-if (!DATABASE_URL) {
-  console.error("DATABASE_URL environment variable is not set");
-  throw new Error("Database connection string is required");
+// 빌드 시에는 DATABASE_URL이 없을 수 있으므로 오류를 발생시키지 않음
+// 런타임에 실제로 사용될 때 오류가 발생하도록 함
+if (!DATABASE_URL && typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
+  console.warn("DATABASE_URL environment variable is not set (this is OK during build)");
 }
 
 // pg Pool 생성 (SSL 설정 포함)
@@ -32,11 +33,6 @@ const sqlFunction = async (
   strings: TemplateStringsArray,
   ...values: any[]
 ): Promise<any[]> => {
-  // 빌드 타임에는 빈 배열 반환
-  if (!pool || !DATABASE_URL) {
-    return [];
-  }
-
   try {
     // 템플릿 리터럴을 파싱하여 쿼리와 파라미터 분리
     const queryParts: string[] = [];
