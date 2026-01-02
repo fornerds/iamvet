@@ -4787,8 +4787,7 @@ export const incrementTransferViewCount = async (
 export const getRelatedTransfers = async (transferId: string, limit = 5) => {
   const query = `
     SELECT 
-      t.*,
-      h."hospitalType"
+      t.*
     FROM transfers t
     LEFT JOIN users u ON t."userId" = u.id
     LEFT JOIN hospitals h ON u.id = h."userId" AND u."userType" = 'HOSPITAL'
