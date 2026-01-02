@@ -93,14 +93,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
         images = [];
       }
 
-      // hospitalType 매핑: hospitals 테이블의 hospitalType을 우선 사용, 없으면 category 사용
-      const hospitalType = t.hospitalType || t.category || "";
-
       return {
         id: t.id,
         title: t.title,
         location: t.location || `${t.sido || ""} ${t.sigungu || ""}`.trim(),
-        hospitalType: hospitalType,
+        hospitalType: t.category || "", // category를 hospitalType으로 전달 (병원양도, 기계장치, 의료장비, 인테리어)
         area: Number(t.area) || 0,
         price: t.price ? (typeof t.price === "number" ? t.price.toString() : t.price) : null,
         category: t.category,
