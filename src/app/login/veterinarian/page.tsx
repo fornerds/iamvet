@@ -125,9 +125,14 @@ export default function VeterinarianLoginPage() {
 
             {/* 링크들 */}
             <div className="flex justify-between items-center text-[14px] mt-4">
-              <Link href="/find-password" className="text-[#9098A4] underline">
-                비밀번호 찾기
-              </Link>
+              <div className="flex gap-3">
+                <Link href="/find-username?userType=veterinarian" className="text-[#9098A4] underline">
+                  아이디 찾기
+                </Link>
+                <Link href="/find-password" className="text-[#9098A4] underline">
+                  비밀번호 찾기
+                </Link>
+              </div>
               <Link
                 href="/register/veterinarian"
                 className="text-[#FF8796] underline"

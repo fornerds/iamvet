@@ -16,7 +16,27 @@ export async function GET(
         id: id,
         deletedAt: null,
       },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        type: true,
+        imageUrl: true,
+        // mobileImageUrl은 데이터베이스에 컬럼이 없을 수 있으므로 제외
+        // mobileImageUrl: true,
+        linkUrl: true,
+        isActive: true,
+        startDate: true,
+        endDate: true,
+        targetAudience: true,
+        buttonText: true,
+        variant: true,
+        viewCount: true,
+        clickCount: true,
+        createdBy: true,
+        createdAt: true,
+        updatedAt: true,
+        deletedAt: true,
         admin_users: {
           select: {
             id: true,
@@ -42,7 +62,10 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: advertisement,
+      data: {
+        ...advertisement,
+        mobileImageUrl: null, // 데이터베이스에 컬럼이 없을 경우 null
+      },
     });
   } catch (error) {
     console.error("Failed to fetch advertisement:", error);
@@ -70,6 +93,11 @@ export async function PUT(
 
     const advertisement = await (prisma as any).advertisements.findUnique({
       where: { id: id },
+      select: {
+        id: true,
+        imageUrl: true,
+        // mobileImageUrl: true, // 컬럼이 없을 수 있으므로 제외
+      },
     });
 
     if (!advertisement) {
@@ -98,41 +126,66 @@ export async function PUT(
     } = body;
 
     // 이미지가 변경된 경우 기존 S3 이미지 삭제
-    if (imageUrl !== advertisement.imageUrl && advertisement.imageUrl && isS3Url(advertisement.imageUrl)) {
+    const currentImageUrl = advertisement.imageUrl;
+    if (imageUrl !== currentImageUrl && currentImageUrl && isS3Url(currentImageUrl)) {
       try {
-        await deleteImage(advertisement.imageUrl);
+        await deleteImage(currentImageUrl);
       } catch (error) {
         console.error("Failed to delete old image:", error);
       }
     }
 
     // 모바일 이미지가 변경된 경우 기존 S3 이미지 삭제
-    if (mobileImageUrl !== advertisement.mobileImageUrl && advertisement.mobileImageUrl && isS3Url(advertisement.mobileImageUrl)) {
+    // mobileImageUrl 컬럼이 데이터베이스에 없을 수 있으므로 안전하게 처리
+    const currentMobileImageUrl = (advertisement as any).mobileImageUrl;
+    if (mobileImageUrl !== currentMobileImageUrl && currentMobileImageUrl && isS3Url(currentMobileImageUrl)) {
       try {
-        await deleteImage(advertisement.mobileImageUrl);
+        await deleteImage(currentMobileImageUrl);
       } catch (error) {
         console.error("Failed to delete old mobile image:", error);
       }
     }
 
+    // mobileImageUrl은 데이터베이스에 컬럼이 없을 수 있으므로 제외
+    const updateData: any = {
+      ...(title !== undefined && { title }),
+      ...(description !== undefined && { description }),
+      ...(type !== undefined && { type }),
+      ...(imageUrl !== undefined && { imageUrl }),
+      // ...(mobileImageUrl !== undefined && { mobileImageUrl }), // 컬럼이 없을 수 있으므로 제외
+      ...(linkUrl !== undefined && { linkUrl }),
+      ...(isActive !== undefined && { isActive }),
+      ...(startDate !== undefined && { startDate: new Date(startDate) }),
+      ...(endDate !== undefined && { endDate: new Date(endDate) }),
+      ...(targetAudience !== undefined && { targetAudience }),
+      ...(buttonText !== undefined && { buttonText }),
+      ...(variant !== undefined && { variant }),
+      updatedAt: new Date(),
+    };
+
     const updatedAdvertisement = await (prisma as any).advertisements.update({
       where: { id: id },
-      data: {
-        ...(title !== undefined && { title }),
-        ...(description !== undefined && { description }),
-        ...(type !== undefined && { type }),
-        ...(imageUrl !== undefined && { imageUrl }),
-        ...(mobileImageUrl !== undefined && { mobileImageUrl }),
-        ...(linkUrl !== undefined && { linkUrl }),
-        ...(isActive !== undefined && { isActive }),
-        ...(startDate !== undefined && { startDate: new Date(startDate) }),
-        ...(endDate !== undefined && { endDate: new Date(endDate) }),
-        ...(targetAudience !== undefined && { targetAudience }),
-        ...(buttonText !== undefined && { buttonText }),
-        ...(variant !== undefined && { variant }),
-        updatedAt: new Date(),
-      },
-      include: {
+      data: updateData,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        type: true,
+        imageUrl: true,
+        // mobileImageUrl: true, // 컬럼이 없을 수 있으므로 제외
+        linkUrl: true,
+        isActive: true,
+        startDate: true,
+        endDate: true,
+        targetAudience: true,
+        buttonText: true,
+        variant: true,
+        viewCount: true,
+        clickCount: true,
+        createdBy: true,
+        createdAt: true,
+        updatedAt: true,
+        deletedAt: true,
         admin_users: {
           select: {
             id: true,
@@ -145,7 +198,10 @@ export async function PUT(
 
     return NextResponse.json({
       success: true,
-      data: updatedAdvertisement,
+      data: {
+        ...updatedAdvertisement,
+        mobileImageUrl: mobileImageUrl || null, // 요청에서 받은 값 또는 null
+      },
     });
   } catch (error) {
     console.error("Failed to update advertisement:", error);
@@ -173,6 +229,11 @@ export async function DELETE(
 
     const advertisement = await (prisma as any).advertisements.findUnique({
       where: { id: id },
+      select: {
+        id: true,
+        imageUrl: true,
+        // mobileImageUrl: true, // 컬럼이 없을 수 있으므로 제외
+      },
     });
 
     if (!advertisement) {
@@ -193,10 +254,11 @@ export async function DELETE(
       }
     }
 
-    // S3 모바일 이미지 삭제
-    if (advertisement.mobileImageUrl && isS3Url(advertisement.mobileImageUrl)) {
+    // S3 모바일 이미지 삭제 (컬럼이 있을 경우에만)
+    const mobileImageUrl = (advertisement as any).mobileImageUrl;
+    if (mobileImageUrl && isS3Url(mobileImageUrl)) {
       try {
-        await deleteImage(advertisement.mobileImageUrl);
+        await deleteImage(mobileImageUrl);
       } catch (error) {
         console.error("Failed to delete mobile image:", error);
       }
@@ -241,6 +303,10 @@ export async function PATCH(
 
     const advertisement = await (prisma as any).advertisements.findUnique({
       where: { id: id },
+      select: {
+        id: true,
+        isActive: true,
+      },
     });
 
     if (!advertisement) {
@@ -258,11 +324,35 @@ export async function PATCH(
         isActive: !advertisement.isActive,
         updatedAt: new Date(),
       },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        type: true,
+        imageUrl: true,
+        // mobileImageUrl: true, // 컬럼이 없을 수 있으므로 제외
+        linkUrl: true,
+        isActive: true,
+        startDate: true,
+        endDate: true,
+        targetAudience: true,
+        buttonText: true,
+        variant: true,
+        viewCount: true,
+        clickCount: true,
+        createdBy: true,
+        createdAt: true,
+        updatedAt: true,
+        deletedAt: true,
+      },
     });
 
     return NextResponse.json({
       success: true,
-      data: updatedAdvertisement,
+      data: {
+        ...updatedAdvertisement,
+        mobileImageUrl: null, // 데이터베이스에 컬럼이 없을 경우 null
+      },
     });
   } catch (error) {
     console.error("Failed to toggle advertisement status:", error);

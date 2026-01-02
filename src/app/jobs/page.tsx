@@ -200,10 +200,16 @@ export default function JobsPage() {
         initializeJobLikes(likedJobIds);
       }
 
-      // 조회수 초기화
+      // 조회수 초기화 (Zustand 스토어에 값이 없을 때만 서버 값으로 초기화)
       jobs.forEach((job: any) => {
         if (job.viewCount !== undefined && job.id) {
-          setJobViewCount(job.id.toString(), job.viewCount);
+          const jobId = job.id.toString();
+          const currentStoreValue = getJobViewCount(jobId);
+          // 스토어에 값이 없거나 0인 경우에만 서버 값으로 초기화
+          // 이미 증가된 조회수는 유지
+          if (currentStoreValue === 0 || currentStoreValue < job.viewCount) {
+            setJobViewCount(jobId, job.viewCount);
+          }
         }
       });
     }
@@ -540,7 +546,13 @@ export default function JobsPage() {
                       isNew={job.isNew}
                       deadline={job.recruitEndDate}
                       isAlwaysOpen={job.isUnlimitedRecruit || false}
-                      viewCount={job.viewCount !== undefined ? job.viewCount : (getJobViewCount(job.id.toString()) || 0)}
+                      viewCount={(() => {
+                        const jobId = job.id.toString();
+                        const storeValue = getJobViewCount(jobId);
+                        // Zustand 스토어에 값이 있으면 우선 사용 (실시간 반영)
+                        // 없으면 서버에서 받은 값 사용
+                        return storeValue > 0 ? storeValue : (job.viewCount || 0);
+                      })()}
                       onClick={() => router.push(`/jobs/${job.id}`)}
                     />
                   ))
@@ -791,7 +803,13 @@ export default function JobsPage() {
                         variant="wide"
                         showDeadline={false}
                         isNew={job.isNew}
-                        viewCount={job.viewCount !== undefined ? job.viewCount : (getJobViewCount(job.id.toString()) || 0)}
+                        viewCount={(() => {
+                        const jobId = job.id.toString();
+                        const storeValue = getJobViewCount(jobId);
+                        // Zustand 스토어에 값이 있으면 우선 사용 (실시간 반영)
+                        // 없으면 서버에서 받은 값 사용
+                        return storeValue > 0 ? storeValue : (job.viewCount || 0);
+                      })()}
                         onClick={() => router.push(`/jobs/${job.id}`)}
                       />
                     ))
@@ -909,7 +927,13 @@ export default function JobsPage() {
                         variant="wide"
                         showDeadline={false}
                         isNew={job.isNew}
-                        viewCount={job.viewCount !== undefined ? job.viewCount : (getJobViewCount(job.id.toString()) || 0)}
+                        viewCount={(() => {
+                        const jobId = job.id.toString();
+                        const storeValue = getJobViewCount(jobId);
+                        // Zustand 스토어에 값이 있으면 우선 사용 (실시간 반영)
+                        // 없으면 서버에서 받은 값 사용
+                        return storeValue > 0 ? storeValue : (job.viewCount || 0);
+                      })()}
                         onClick={() => router.push(`/jobs/${job.id}`)}
                       />
                     ))}

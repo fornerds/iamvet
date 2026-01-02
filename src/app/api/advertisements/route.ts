@@ -91,7 +91,27 @@ export async function GET(req: NextRequest) {
     const [advertisements, total] = await Promise.all([
       (prisma as any).advertisements.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          type: true,
+          imageUrl: true,
+          // mobileImageUrl은 데이터베이스에 컬럼이 없을 수 있으므로 제외
+          // mobileImageUrl: true,
+          linkUrl: true,
+          isActive: true,
+          startDate: true,
+          endDate: true,
+          targetAudience: true,
+          buttonText: true,
+          variant: true,
+          viewCount: true,
+          clickCount: true,
+          createdBy: true,
+          createdAt: true,
+          updatedAt: true,
+          deletedAt: true,
           admin_users: {
             select: {
               id: true,
@@ -121,7 +141,7 @@ export async function GET(req: NextRequest) {
           title: ad.title,
           description: ad.description,
           imageUrl: ad.imageUrl,
-          mobileImageUrl: ad.mobileImageUrl,
+          mobileImageUrl: ad.mobileImageUrl || null, // 컬럼이 없을 경우 null 처리
           linkUrl: ad.linkUrl,
           variant: ad.variant,
           targetAudience: ad.targetAudience,
@@ -200,25 +220,47 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // mobileImageUrl은 데이터베이스에 컬럼이 없을 수 있으므로 제외
+    const createData: any = {
+      id: generateId("ad"),
+      title,
+      description,
+      type,
+      imageUrl,
+      // mobileImageUrl, // 컬럼이 없을 수 있으므로 제외
+      linkUrl,
+      isActive,
+      startDate: start,
+      endDate: end,
+      targetAudience: targetAudience || "ALL",
+      buttonText,
+      variant,
+      createdBy: admin.id,
+      updatedAt: new Date(),
+    };
+
     const advertisement = await (prisma as any).advertisements.create({
-      data: {
-        id: generateId("ad"),
-        title,
-        description,
-        type,
-        imageUrl,
-        mobileImageUrl,
-        linkUrl,
-        isActive,
-        startDate: start,
-        endDate: end,
-        targetAudience: targetAudience || "ALL",
-        buttonText,
-        variant,
-        createdBy: admin.id,
-        updatedAt: new Date(),
-      },
-      include: {
+      data: createData,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        type: true,
+        imageUrl: true,
+        // mobileImageUrl: true, // 컬럼이 없을 수 있으므로 제외
+        linkUrl: true,
+        isActive: true,
+        startDate: true,
+        endDate: true,
+        targetAudience: true,
+        buttonText: true,
+        variant: true,
+        viewCount: true,
+        clickCount: true,
+        createdBy: true,
+        createdAt: true,
+        updatedAt: true,
+        deletedAt: true,
         admin_users: {
           select: {
             id: true,
@@ -231,7 +273,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: advertisement,
+      data: {
+        ...advertisement,
+        mobileImageUrl: mobileImageUrl || null, // 요청에서 받은 값 또는 null
+      },
     });
   } catch (error) {
     console.error("Failed to create advertisement:", error);
