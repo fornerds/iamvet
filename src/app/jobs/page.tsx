@@ -464,6 +464,13 @@ export default function JobsPage() {
                 </div>
               </div>
 
+              {/* 병원 계정 안내 텍스트 */}
+              {isHospitalUser && (
+                <p className="text-[12px] text-[#9098A4]">
+                  ※ 글작성은 병원 회원만 가능합니다
+                </p>
+              )}
+
               {/* 결과 정보 및 정렬 */}
               <div className="flex justify-between items-center">
                 <p className="text-[16px] text-[#9098A4]">총 {totalJobs}건</p>
