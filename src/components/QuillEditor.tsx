@@ -77,6 +77,11 @@ const QuillEditor = forwardRef<QuillEditorRef, QuillEditorProps>(
         };
 
         try {
+          // 커스텀 Size 스타일 등록
+          const Size = Quill.import('attributors/style/size');
+          Size.whitelist = ['10px', '12px', '14px', '16px', '18px', '24px', '32px', '36px', '48px'];
+          Quill.register(Size, true);
+
           // Quill 인스턴스 생성
           quillInstance.current = new Quill(quillRef.current, {
             theme: 'snow',
@@ -84,7 +89,7 @@ const QuillEditor = forwardRef<QuillEditorRef, QuillEditorProps>(
             modules: {
               toolbar: {
                 container: [
-                  [{ 'size': ['small', false, 'large', 'huge'] }], // 폰트 사이즈 추가
+                  [{ 'size': ['10px', '12px', '14px', '16px', '18px', '24px', '32px', '36px', '48px'] }], // 폰트 사이즈 추가
                   ['bold', 'italic', 'underline', 'strike'],
                   [{ 'list': 'ordered'}, { 'list': 'bullet' }],
                   [{ 'align': [] }],

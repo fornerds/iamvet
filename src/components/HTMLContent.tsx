@@ -103,17 +103,8 @@ export const HTMLContent: React.FC<HTMLContentProps> = ({
         }
       });
 
-      // Quill 폰트 크기 클래스 처리
-      const sizedElements = contentRef.current.querySelectorAll('[class*="ql-size"]');
-      sizedElements.forEach((element) => {
-        if (element.classList.contains('ql-size-small')) {
-          (element as HTMLElement).style.fontSize = '0.75em';
-        } else if (element.classList.contains('ql-size-large')) {
-          (element as HTMLElement).style.fontSize = '1.5em';
-        } else if (element.classList.contains('ql-size-huge')) {
-          (element as HTMLElement).style.fontSize = '2.5em';
-        }
-      });
+      // Quill 폰트 크기는 CSS에서 처리하므로 JavaScript 처리 제거
+      // CSS의 html-content.css에서 [style*="font-size: XXpx"] 선택자로 처리됨
     }
   }, [content]);
 

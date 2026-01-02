@@ -293,17 +293,50 @@
   text-align: justify !important;
 }
 
-/* Quill font sizes */
-.html-content .ql-size-small {
-  font-size: 0.75em !important;
+/* Quill font sizes - 숫자 기반 폰트 사이즈 */
+.html-content [style*="font-size: 10px"],
+.html-content .ql-size-10px {
+  font-size: 10px !important;
 }
 
-.html-content .ql-size-large {
-  font-size: 1.5em !important;
+.html-content [style*="font-size: 12px"],
+.html-content .ql-size-12px {
+  font-size: 12px !important;
 }
 
-.html-content .ql-size-huge {
-  font-size: 2.5em !important;
+.html-content [style*="font-size: 14px"],
+.html-content .ql-size-14px {
+  font-size: 14px !important;
+}
+
+.html-content [style*="font-size: 16px"],
+.html-content .ql-size-16px {
+  font-size: 16px !important;
+}
+
+.html-content [style*="font-size: 18px"],
+.html-content .ql-size-18px {
+  font-size: 18px !important;
+}
+
+.html-content [style*="font-size: 24px"],
+.html-content .ql-size-24px {
+  font-size: 24px !important;
+}
+
+.html-content [style*="font-size: 32px"],
+.html-content .ql-size-32px {
+  font-size: 32px !important;
+}
+
+.html-content [style*="font-size: 36px"],
+.html-content .ql-size-36px {
+  font-size: 36px !important;
+}
+
+.html-content [style*="font-size: 48px"],
+.html-content .ql-size-48px {
+  font-size: 48px !important;
 }
 
 /* Quill text colors */

@@ -791,7 +791,7 @@ export default function JobDetailPage({
                   채용공고 상세설명
                 </h2>
                 <div
-                  className="html-content font-text text-[16px] text-sub prose prose-sm max-w-none [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_p]:mb-4 [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6 [&_li]:mb-2 [&_strong]:font-semibold [&_em]:italic [&_a]:text-[#ff8796] [&_a]:underline [&_.ql-size-small]:text-[12px] [&_.ql-size-large]:text-[24px] [&_.ql-size-huge]:text-[40px]"
+                  className="html-content font-text text-[16px] text-sub prose prose-sm max-w-none [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_p]:mb-4 [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6 [&_li]:mb-2 [&_strong]:font-semibold [&_em]:italic [&_a]:text-[#ff8796] [&_a]:underline [&_[style*='font-size:10px']]:text-[10px] [&_[style*='font-size:12px']]:text-[12px] [&_[style*='font-size:14px']]:text-[14px] [&_[style*='font-size:16px']]:text-[16px] [&_[style*='font-size:18px']]:text-[18px] [&_[style*='font-size:24px']]:text-[24px] [&_[style*='font-size:32px']]:text-[32px] [&_[style*='font-size:36px']]:text-[36px] [&_[style*='font-size:48px']]:text-[48px]"
                   dangerouslySetInnerHTML={{ __html: jobData.benefits }}
                 />
               </div>
