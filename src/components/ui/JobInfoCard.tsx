@@ -29,6 +29,7 @@ interface JobInfoCardProps {
   showToggle?: boolean; // 활성화 토글 버튼 표시 여부 (my-jobs 페이지에서만)
   isActive?: boolean; // 채용공고 활성화 여부
   onToggleActive?: (id: string | number) => void; // 활성화 토글 핸들러
+  viewCount?: number; // 조회수
 }
 
 const JobInfoCard: React.FC<JobInfoCardProps> = ({
@@ -51,6 +52,7 @@ const JobInfoCard: React.FC<JobInfoCardProps> = ({
   showToggle = false,
   isActive = true,
   onToggleActive,
+  viewCount,
 }) => {
   const { user, isAuthenticated } = useAuth();
   const isWide = variant === "wide";
@@ -222,6 +224,15 @@ const JobInfoCard: React.FC<JobInfoCardProps> = ({
           </div>
         )}
       </div>
+
+      {/* 조회수 표시 */}
+      {viewCount !== undefined && (
+        <div className={`${isWide ? "mt-3" : "mt-4"}`}>
+          <span className="font-text text-[14px] text-[#9098A4]">
+            조회 {viewCount.toLocaleString()}
+          </span>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use, useEffect, useMemo } from "react";
+import { useState, use, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -13,7 +13,6 @@ import {
   BookmarkFilledIcon,
   BookmarkIcon,
   WalletIcon,
-  EyeIcon,
 } from "public/icons";
 import { Tag } from "@/components/ui/Tag";
 import { Button } from "@/components/ui/Button";
@@ -72,6 +71,9 @@ export default function JobDetailPage({
     error: resumeError,
   } = useHasResume();
 
+  // 조회수 증가 중복 실행 방지 (job ID 저장)
+  const hasIncrementedViewCount = useRef<string | false>(false);
+
   // API 응답의 isOwner 값을 사용하되, 클라이언트에서도 추가 체크
   const isOwner =
     jobData?.isOwner === true ||
@@ -95,22 +97,6 @@ export default function JobDetailPage({
       setJobLike(id, true);
     }
   }, [jobData, id, setJobLike]);
-
-  // 조회수 초기화
-  useEffect(() => {
-    if (jobData) {
-      console.log("[JobDetail] 서버에서 받은 채용공고 데이터:", {
-        id,
-        viewCount: jobData.viewCount,
-      });
-
-      // 조회수 초기화
-      if (jobData.viewCount !== undefined) {
-        // 서버에서 받은 조회수로 초기화
-        setJobViewCount(id, jobData.viewCount);
-      }
-    }
-  }, [jobData, id, setJobViewCount]);
 
   // 조회수 증가 함수
   const incrementViewCount = async () => {
@@ -165,21 +151,46 @@ export default function JobDetailPage({
     }
   };
 
-  // 조회수 증가를 위한 별도 useEffect
+  // 조회수 초기화 및 증가 (transfers 패턴 참고)
   useEffect(() => {
-    if (jobData) {
+    if (jobData && jobData.id) {
+      // 같은 job ID에 대해 이미 실행했는지 확인
+      // jobData.id가 변경되면 ref도 다른 값이므로 자동으로 실행됨
+      if (hasIncrementedViewCount.current === jobData.id) {
+        console.log(
+          "[JobDetail] 이미 조회수 증가 처리 완료:",
+          jobData.id
+        );
+        return;
+      }
+
+      console.log("[JobDetail] 서버에서 받은 채용공고 데이터:", {
+        id: jobData.id,
+        viewCount: jobData.viewCount,
+      });
+
+      // 조회수 초기화 (서버에서 받은 값으로)
+      if (jobData.viewCount !== undefined) {
+        console.log(
+          "[JobDetail] 서버에서 받은 조회수:",
+          jobData.viewCount
+        );
+        setJobViewCount(jobData.id, jobData.viewCount);
+      }
+
+      // 중복 실행 방지: 먼저 ref를 설정 (React Strict Mode 대응)
+      // 이렇게 하면 두 번째 실행이 일어나기 전에 ref가 설정됨
+      hasIncrementedViewCount.current = jobData.id;
+
+      // 조회수 증가 API 호출 (한 번만 실행)
       console.log(
         "[JobDetail] 채용공고 데이터 로드 완료, 조회수 증가 API 호출"
       );
 
-      // 낙관적 업데이트: API 호출 전에 먼저 클라이언트에서 조회수 증가
-      const currentViewCount = getJobViewCount(id);
-      setJobViewCount(id, currentViewCount + 1);
-
-      // 그 다음 API 호출
+      // API 호출만 실행
       incrementViewCount();
     }
-  }, [jobData?.id]); // jobData가 설정될 때마다 실행
+  }, [jobData?.id]); // jobData.id가 변경될 때만 실행
 
   // 디버깅: isOwner 상태 확인
   console.log("Owner check:", {
@@ -694,12 +705,11 @@ export default function JobDetailPage({
               </div>
 
               {/* 조회수 */}
-              {/* <div className="flex items-center gap-2 mt-4">
-                <EyeIcon currentColor="#9098A4" />
+              <div className="mt-4">
                 <span className="font-text text-[14px] text-[#9098A4]">
                   조회 {getJobViewCount(id).toLocaleString()}
                 </span>
-              </div> */}
+              </div>
             </div>
 
             {/* 근무 조건 */}

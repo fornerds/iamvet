@@ -12,6 +12,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import JobFamousList from "@/components/features/main/JobFamousList";
 import { useJobs, JobFilters } from "@/hooks/api/useJobs";
 import { useLikeStore } from "@/stores/likeStore";
+import { useViewCountStore } from "@/stores/viewCountStore";
 import { workTypeOptions } from "@/constants/options";
 import { useAuth } from "@/hooks/api/useAuth";
 import { useSideAds } from "@/hooks/api/useAdvertisements";
@@ -29,6 +30,9 @@ export default function JobsPage() {
   // Zustand 스토어에서 좋아요 상태 관리
   const { setJobLike, toggleJobLike, initializeJobLikes, isJobLiked } =
     useLikeStore();
+
+  // Zustand 스토어에서 조회수 상태 관리
+  const { setJobViewCount, getJobViewCount } = useViewCountStore();
 
   // SIDE_AD 광고 데이터 조회
   const { data: sideAdsData, isLoading: isLoadingAd } = useSideAds();
@@ -195,8 +199,15 @@ export default function JobsPage() {
         console.log("[JobsPage] 서버에서 받은 좋아요 채용공고:", likedJobIds);
         initializeJobLikes(likedJobIds);
       }
+
+      // 조회수 초기화
+      jobs.forEach((job: any) => {
+        if (job.viewCount !== undefined && job.id) {
+          setJobViewCount(job.id.toString(), job.viewCount);
+        }
+      });
     }
-  }, [jobData, initializeJobLikes]);
+  }, [jobData, initializeJobLikes, setJobViewCount]);
 
   // 채용공고 좋아요/취소 토글 핸들러 (Zustand 스토어 사용)
   const handleJobLike = async (jobId: string | number) => {
@@ -529,6 +540,7 @@ export default function JobsPage() {
                       isNew={job.isNew}
                       deadline={job.recruitEndDate}
                       isAlwaysOpen={job.isUnlimitedRecruit || false}
+                      viewCount={getJobViewCount(job.id.toString()) || job.viewCount || 0}
                       onClick={() => router.push(`/jobs/${job.id}`)}
                     />
                   ))
@@ -779,6 +791,7 @@ export default function JobsPage() {
                         variant="wide"
                         showDeadline={false}
                         isNew={job.isNew}
+                        viewCount={getJobViewCount(job.id.toString()) || job.viewCount || 0}
                         onClick={() => router.push(`/jobs/${job.id}`)}
                       />
                     ))
@@ -896,6 +909,7 @@ export default function JobsPage() {
                         variant="wide"
                         showDeadline={false}
                         isNew={job.isNew}
+                        viewCount={getJobViewCount(job.id.toString()) || job.viewCount || 0}
                         onClick={() => router.push(`/jobs/${job.id}`)}
                       />
                     ))}
