@@ -24,9 +24,11 @@ interface TransferCardProps {
 }
 
 // 가격 포맷팅 함수
-const formatPrice = (priceString: string | number): string => {
+const formatPrice = (priceString: string | number | undefined | null): string => {
+  if (!priceString && priceString !== 0) return "가격 협의";
+
   // 타입 체크 및 문자열 변환
-  const priceStr = String(priceString);
+  const priceStr = String(priceString).trim();
 
   // 이미 "만원" 또는 "원"이 포함된 경우 숫자 부분을 추출해서 콤마 포맷팅
   if (priceStr.includes("만원") || priceStr.includes("원")) {
@@ -39,21 +41,23 @@ const formatPrice = (priceString: string | number): string => {
     return priceStr; // 매치되지 않으면 원본 반환
   }
 
-  // 숫자만 추출
-  const numbers = priceStr.match(/\d+/g);
-  if (!numbers) return priceStr;
+  // 숫자만 추출 (콤마 제거)
+  const cleanPrice = priceStr.replace(/[^\d]/g, "");
+  if (!cleanPrice) return "가격 협의";
 
-  const number = parseInt(numbers.join(""));
+  // 숫자로 변환
+  const number = Number(cleanPrice);
+  if (isNaN(number) || number === 0) return "가격 협의";
 
   // 만원 단위 이상인 경우
   if (number >= 10000) {
     const man = number / 10000;
     // 정수로 떨어지는 경우
     if (number % 10000 === 0) {
-      return `${formatNumberWithCommas(man.toString())}만원`;
+      return `${formatNumberWithCommas(Math.floor(man).toString())}만원`;
     }
-    // 소수점이 있는 경우 (예: 1.5억)
-    return `${formatNumberWithCommas(man.toString())}만원`;
+    // 소수점이 있는 경우 (예: 1.5억 -> 15,000만원)
+    return `${formatNumberWithCommas(Math.floor(man).toString())}만원`;
   }
 
   // 만원 미만인 경우 원 단위로 표시

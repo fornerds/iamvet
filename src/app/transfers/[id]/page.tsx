@@ -1189,7 +1189,7 @@ export default function TransferDetailPage({
                             location={transfer.location || "위치 정보 없음"}
                             hospitalType={transfer.category || transfer.hospitalType || ""}
                             area={transfer.area || 0}
-                            price={formatPrice(transfer.price)}
+                            price={transfer.price || ""}
                             date={
                               transfer.createdAt
                                 ? new Date(transfer.createdAt)
@@ -1248,7 +1248,7 @@ export default function TransferDetailPage({
                       location={transfer.location || "위치 정보 없음"}
                       hospitalType={transfer.category || transfer.hospitalType || ""}
                       area={transfer.area || 0}
-                      price={formatPrice(transfer.price)}
+                      price={transfer.price || ""}
                       date={
                         transfer.createdAt
                           ? new Date(transfer.createdAt)
