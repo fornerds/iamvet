@@ -130,6 +130,7 @@ export async function GET(request: NextRequest) {
       recruitEndDate: job.recruitEndDate ? new Date(job.recruitEndDate) : null,
       isUnlimitedRecruit: Boolean(job.isUnlimitedRecruit) || !job.recruitEndDate,
       createdAt: new Date(job.createdAt),
+      viewCount: parseInt(job.viewCount) || 0, // 조회수 추가
       // Additional fields for detailed view
       jobType: Array.isArray(job.workType) ? job.workType.join(', ') : (job.workType || '정규직'),
       benefits: job.benefits,

@@ -540,7 +540,7 @@ export default function JobsPage() {
                       isNew={job.isNew}
                       deadline={job.recruitEndDate}
                       isAlwaysOpen={job.isUnlimitedRecruit || false}
-                      viewCount={getJobViewCount(job.id.toString()) || job.viewCount || 0}
+                      viewCount={job.viewCount !== undefined ? job.viewCount : (getJobViewCount(job.id.toString()) || 0)}
                       onClick={() => router.push(`/jobs/${job.id}`)}
                     />
                   ))
@@ -791,7 +791,7 @@ export default function JobsPage() {
                         variant="wide"
                         showDeadline={false}
                         isNew={job.isNew}
-                        viewCount={getJobViewCount(job.id.toString()) || job.viewCount || 0}
+                        viewCount={job.viewCount !== undefined ? job.viewCount : (getJobViewCount(job.id.toString()) || 0)}
                         onClick={() => router.push(`/jobs/${job.id}`)}
                       />
                     ))
@@ -909,7 +909,7 @@ export default function JobsPage() {
                         variant="wide"
                         showDeadline={false}
                         isNew={job.isNew}
-                        viewCount={getJobViewCount(job.id.toString()) || job.viewCount || 0}
+                        viewCount={job.viewCount !== undefined ? job.viewCount : (getJobViewCount(job.id.toString()) || 0)}
                         onClick={() => router.push(`/jobs/${job.id}`)}
                       />
                     ))}
