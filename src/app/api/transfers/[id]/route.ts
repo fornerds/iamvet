@@ -62,7 +62,57 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     // 관련 양도양수 게시글
-    const relatedTransfers = await getRelatedTransfers(transferId, 5);
+    const relatedTransfersRaw = await getRelatedTransfers(transferId, 5);
+    
+    // 관련 양도양수 게시글의 좋아요 정보 조회
+    let relatedTransferLikes: string[] = [];
+    if (userId && relatedTransfersRaw.length > 0) {
+      const relatedTransferIds = relatedTransfersRaw.map((t: any) => t.id);
+      const likes = await (prisma as any).transferLike.findMany({
+        where: {
+          userId: userId,
+          transferId: { in: relatedTransferIds },
+        },
+        select: {
+          transferId: true,
+        },
+      });
+      relatedTransferLikes = likes.map((like: any) => like.transferId);
+    }
+
+    // 관련 양도양수 데이터 변환
+    const relatedTransfers = relatedTransfersRaw.map((t: any) => {
+      // images 파싱
+      let images = [];
+      try {
+        if (t.images) {
+          images = typeof t.images === "string" ? JSON.parse(t.images) : t.images;
+        }
+      } catch (error) {
+        console.error("Error parsing images for related transfer:", t.id, error);
+        images = [];
+      }
+
+      // hospitalType 매핑: hospitals 테이블의 hospitalType을 우선 사용, 없으면 category 사용
+      const hospitalType = t.hospitalType || t.category || "";
+
+      return {
+        id: t.id,
+        title: t.title,
+        location: t.location || `${t.sido || ""} ${t.sigungu || ""}`.trim(),
+        hospitalType: hospitalType,
+        area: Number(t.area) || 0,
+        price: t.price ? (typeof t.price === "number" ? t.price.toString() : t.price) : null,
+        category: t.category,
+        categories: t.category, // TransferCard에서 사용
+        images: images,
+        viewCount: Number(t.views) || 0,
+        views: Number(t.views) || 0, // 호환성을 위해 둘 다 제공
+        createdAt: t.createdAt,
+        isLiked: relatedTransferLikes.includes(t.id),
+        isBookmarked: relatedTransferLikes.includes(t.id),
+      };
+    });
 
     const transferDetail = {
       ...transfer,

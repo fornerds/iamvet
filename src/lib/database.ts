@@ -4786,9 +4786,14 @@ export const incrementTransferViewCount = async (
 
 export const getRelatedTransfers = async (transferId: string, limit = 5) => {
   const query = `
-    SELECT * FROM transfers 
-    WHERE id != $1 AND "deletedAt" IS NULL AND status != 'DISABLED' AND "isDraft" = false
-    ORDER BY "createdAt" DESC 
+    SELECT 
+      t.*,
+      h."hospitalType"
+    FROM transfers t
+    LEFT JOIN users u ON t."userId" = u.id
+    LEFT JOIN hospitals h ON u.id = h."userId" AND u."userType" = 'HOSPITAL'
+    WHERE t.id != $1 AND t."deletedAt" IS NULL AND t.status != 'DISABLED' AND t."isDraft" = false
+    ORDER BY t."createdAt" DESC 
     LIMIT $2
   `;
   const result = await pool.query(query, [transferId, limit]);

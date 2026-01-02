@@ -1185,8 +1185,8 @@ export default function TransferDetailPage({
                             id={transfer.id}
                             title={transfer.title || "제목 없음"}
                             location={transfer.location || "위치 정보 없음"}
-                            hospitalType={transfer.hospitalType || ""}
-                            area={transfer.area || ""}
+                            hospitalType={transfer.hospitalType || transfer.category || ""}
+                            area={transfer.area || 0}
                             price={formatPrice(transfer.price)}
                             date={
                               transfer.createdAt
@@ -1195,9 +1195,9 @@ export default function TransferDetailPage({
                                     .replace(/\.$/, "")
                                 : ""
                             }
-                            views={transfer.viewCount || 0}
+                            views={transfer.viewCount || transfer.views || 0}
                             imageUrl={transfer.images?.[0] || transfer1Img.src}
-                            categories={transfer.categories || []}
+                            categories={Array.isArray(transfer.categories) ? transfer.categories : (transfer.categories ? [transfer.categories] : [transfer.category || ""].filter(Boolean))}
                             isAd={false}
                             isLiked={isTransferLiked(transfer.id)}
                             onLike={() =>
@@ -1244,8 +1244,8 @@ export default function TransferDetailPage({
                       id={transfer.id}
                       title={transfer.title || "제목 없음"}
                       location={transfer.location || "위치 정보 없음"}
-                      hospitalType={transfer.hospitalType || ""}
-                      area={transfer.area || ""}
+                      hospitalType={transfer.hospitalType || transfer.category || ""}
+                      area={transfer.area || 0}
                       price={formatPrice(transfer.price)}
                       date={
                         transfer.createdAt
@@ -1254,9 +1254,9 @@ export default function TransferDetailPage({
                               .replace(/\.$/, "")
                           : ""
                       }
-                      views={transfer.viewCount || 0}
+                      views={transfer.viewCount || transfer.views || 0}
                       imageUrl={transfer.images?.[0] || transfer1Img.src}
-                      categories={transfer.categories || []}
+                      categories={Array.isArray(transfer.categories) ? transfer.categories : (transfer.categories ? [transfer.categories] : [transfer.category || ""].filter(Boolean))}
                       isAd={false}
                       isLiked={isTransferLiked(transfer.id)}
                       onLike={() => handleRecommendedTransferLike(transfer.id)}
