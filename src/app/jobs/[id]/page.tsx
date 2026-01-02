@@ -791,7 +791,7 @@ export default function JobDetailPage({
                   채용공고 상세설명
                 </h2>
                 <div
-                  className="font-text text-[16px] text-sub prose prose-sm max-w-none [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_p]:mb-4 [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6 [&_li]:mb-2 [&_strong]:font-semibold [&_em]:italic [&_a]:text-[#ff8796] [&_a]:underline"
+                  className="html-content font-text text-[16px] text-sub prose prose-sm max-w-none [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_p]:mb-4 [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6 [&_li]:mb-2 [&_strong]:font-semibold [&_em]:italic [&_a]:text-[#ff8796] [&_a]:underline [&_.ql-size-small]:text-[12px] [&_.ql-size-large]:text-[24px] [&_.ql-size-huge]:text-[40px]"
                   dangerouslySetInnerHTML={{ __html: jobData.benefits }}
                 />
               </div>
